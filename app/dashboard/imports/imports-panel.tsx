@@ -14,18 +14,25 @@ export function ImportsPanel({
 
   async function registerImport(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const formElement = event.currentTarget;
     setSaving(true);
     setMessage("");
 
-    const form = new FormData(event.currentTarget);
+    const form = new FormData(formElement);
     const file = form.get("file");
-    const filename =
-      file instanceof File && file.name ? file.name : "supplier-invoice.pdf";
+
+    if (!(file instanceof File) || !file.name) {
+      setMessage("Choose an invoice file to upload.");
+      setSaving(false);
+      return;
+    }
+
+    const uploadData = new FormData();
+    uploadData.append("file", file);
 
     const response = await fetch("/api/supplier-imports", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ originalFilename: filename }),
+      body: uploadData,
     });
     const payload = await response.json();
 
@@ -36,9 +43,9 @@ export function ImportsPanel({
     }
 
     setImports((current) => [payload.import, ...current]);
-    event.currentTarget.reset();
+    formElement.reset();
     setSaving(false);
-    setMessage("Import queued for processing.");
+    setMessage(payload.import?.result?.message ?? "Import uploaded.");
   }
 
   return (
@@ -48,8 +55,8 @@ export function ImportsPanel({
           <div>
             <h2>Register supplier invoice</h2>
             <p>
-              Select an invoice file to queue matching. File parsing runs in a
-              later processing step.
+              Upload a PDF, CSV, or Excel invoice. The Python OCR service extracts
+              line items; optional OpenAI improves menu matching.
             </p>
           </div>
         </div>
@@ -59,7 +66,7 @@ export function ImportsPanel({
             <input accept=".pdf,.csv,.xlsx" name="file" type="file" />
           </label>
           <button className="button primary" disabled={saving} type="submit">
-            {saving ? "Registering..." : "Queue import"}
+            {saving ? "Processing..." : "Upload and process"}
           </button>
         </form>
       </section>
@@ -73,14 +80,36 @@ export function ImportsPanel({
         </div>
         <div className="data-list">
           {imports.map((item) => (
-            <article className="data-row" key={item.id}>
-              <div>
-                <strong>{item.originalFilename}</strong>
-                <span className={`status-pill ${item.status}`}>
-                  {item.status}
-                </span>
+            <article className="data-row stacked import-row" key={item.id}>
+              <div className="import-row-head">
+                <div>
+                  <strong>{item.originalFilename}</strong>
+                  <span className={`status-pill ${item.status}`}>
+                    {item.status}
+                  </span>
+                </div>
+                <small>{new Date(item.createdAt).toLocaleString()}</small>
               </div>
-              <small>{new Date(item.createdAt).toLocaleString()}</small>
+              {item.result?.message && (
+                <p className="import-summary">
+                  {item.result.ocrMethod ? `${item.result.ocrMethod} · ` : ""}
+                  {item.result.message}
+                </p>
+              )}
+              {item.result?.lineItems && item.result.lineItems.length > 0 && (
+                <ul className="import-lines">
+                  {item.result.lineItems.slice(0, 5).map((line) => (
+                    <li key={`${item.id}-${line.description}`}>
+                      <span>{line.description}</span>
+                      {line.matchedProductName ? (
+                        <b>Matched: {line.matchedProductName}</b>
+                      ) : (
+                        <i>No menu match</i>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </article>
           ))}
           {imports.length === 0 && (

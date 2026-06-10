@@ -99,14 +99,23 @@ export function ReportsPanel({
         <div className="data-list">
           {reports.map((report) => (
             <article className="data-row stacked" key={report.id}>
-              <div>
-                <strong>
-                  {report.periodStart} to {report.periodEnd}
-                </strong>
-                <span>
-                  {report.summary.logCount} entries ·{" "}
-                  {formatMoney(report.summary.totalCostMinor, currencyCode)}
-                </span>
+              <div className="report-row-head">
+                <div>
+                  <strong>
+                    {report.periodStart} to {report.periodEnd}
+                  </strong>
+                  <span>
+                    {report.summary.logCount} entries ·{" "}
+                    {formatMoney(report.summary.totalCostMinor, currencyCode)}
+                  </span>
+                </div>
+                <a
+                  className="button ghost small"
+                  download
+                  href={`/api/reports/${report.id}/export`}
+                >
+                  Export CSV
+                </a>
               </div>
               {report.summary.topProducts.length > 0 && (
                 <small>

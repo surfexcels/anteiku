@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
+import { cache } from "react";
 import { createClient } from "@/src/lib/supabase/server";
 import { SupabaseBusinessRepository } from "@/src/modules/business/infrastructure/supabase-business-repository";
 
-export async function getBusinessContext() {
+export const getBusinessContext = cache(async function getBusinessContext() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const userId = data?.claims?.sub;
@@ -30,4 +31,4 @@ export async function getBusinessContext() {
   }
 
   return { supabase, userId, business, location };
-}
+});

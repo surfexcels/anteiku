@@ -7,6 +7,7 @@ export interface CurrentBusiness {
   currencyCode: string;
   timezone: string;
   role: MembershipRole;
+  carbonDisclosureEnabled: boolean;
 }
 
 export interface BusinessLocation {

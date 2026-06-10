@@ -26,6 +26,18 @@ function mapReport(row: ReportRow): Report {
 export class SupabaseReportRepository implements ReportRepository {
   constructor(private readonly client: SupabaseClient) {}
 
+  async getById(businessId: string, reportId: string): Promise<Report | null> {
+    const { data, error } = await this.client
+      .from("reports")
+      .select("id, period_start, period_end, summary, created_at")
+      .eq("business_id", businessId)
+      .eq("id", reportId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data ? mapReport(data as ReportRow) : null;
+  }
+
   async list(businessId: string): Promise<Report[]> {
     const { data, error } = await this.client
       .from("reports")

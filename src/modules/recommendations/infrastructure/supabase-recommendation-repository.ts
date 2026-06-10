@@ -1,5 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { RecommendationRepository } from "@/src/modules/recommendations/application/recommendation-repository";
+import type {
+  CreateRecommendationInput,
+  RecommendationRepository,
+} from "@/src/modules/recommendations/application/recommendation-repository";
 import type {
   Recommendation,
   RecommendationStatus,
@@ -31,6 +34,27 @@ export class SupabaseRecommendationRepository
   implements RecommendationRepository
 {
   constructor(private readonly client: SupabaseClient) {}
+
+  async create(input: CreateRecommendationInput): Promise<Recommendation> {
+    const { data, error } = await this.client
+      .from("recommendations")
+      .insert({
+        business_id: input.businessId,
+        location_id: input.locationId,
+        title: input.title,
+        explanation: input.explanation,
+        evidence: input.evidence,
+        estimated_annual_impact_minor: input.estimatedAnnualImpactMinor,
+        currency_code: input.currencyCode,
+      })
+      .select(
+        "id, title, explanation, estimated_annual_impact_minor, currency_code, status, generated_at",
+      )
+      .single();
+
+    if (error) throw error;
+    return mapRecommendation(data as RecommendationRow);
+  }
 
   async list(businessId: string): Promise<Recommendation[]> {
     const { data, error } = await this.client

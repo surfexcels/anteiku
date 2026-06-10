@@ -17,3 +17,33 @@ export function getPublicSupabaseEnv() {
     publishableKey: publicSupabaseKey,
   };
 }
+
+const openAiApiKey = process.env.OPENAI_API_KEY;
+const openAiModel = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
+
+export function isOpenAIConfigured() {
+  return Boolean(openAiApiKey?.trim());
+}
+
+export function getOpenAIEnv() {
+  if (!openAiApiKey?.trim()) {
+    throw new Error(
+      "OpenAI is not configured. Add OPENAI_API_KEY to your server environment.",
+    );
+  }
+
+  return {
+    apiKey: openAiApiKey.trim(),
+    model: openAiModel.trim() || "gpt-4o-mini",
+  };
+}
+
+const ocrServiceUrl = process.env.OCR_SERVICE_URL ?? "http://127.0.0.1:8000";
+
+export function isOcrServiceConfigured() {
+  return Boolean(ocrServiceUrl.trim());
+}
+
+export function getOcrServiceUrl() {
+  return ocrServiceUrl.replace(/\/$/, "");
+}

@@ -20,6 +20,22 @@ export const addBusinessProductSchema = z.object({
   unitCost: z.coerce.number().finite().min(0).max(100000),
 });
 
+export const addCustomBusinessProductSchema = z.object({
+  name: z.string().trim().min(1).max(160),
+  unit: z.enum(PRODUCT_UNITS),
+  unitCost: z.coerce.number().finite().min(0).max(100000),
+});
+
+export const updateBusinessProductSchema = z.object({
+  name: z.string().trim().min(1).max(160).optional(),
+  unit: z.enum(PRODUCT_UNITS).optional(),
+  unitCost: z.coerce.number().finite().min(0).max(100000).optional(),
+  isActive: z.boolean().optional(),
+  unitCo2eG: z.coerce.number().finite().min(0).max(1_000_000).optional(),
+  co2eSource: z.enum(["benchmark", "manual", "supplier", "verified"]).optional(),
+  co2eMethodology: z.string().trim().max(2000).optional().nullable(),
+});
+
 export function moneyToMinorUnits(value: number) {
   return Math.round((value + Number.EPSILON) * 100);
 }

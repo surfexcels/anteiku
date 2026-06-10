@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getBusinessContext } from "@/src/lib/auth/get-business-context";
+import { invalidateBusinessDashboardCache } from "@/src/lib/cache/invalidate-business-dashboard-cache";
 import { createWasteLogSchema } from "@/src/modules/waste/application/waste-schemas";
 import { SupabaseWasteRepository } from "@/src/modules/waste/infrastructure/supabase-waste-repository";
 
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
       note: parsed.data.note,
       occurredAt: parsed.data.occurredAt,
     });
+    await invalidateBusinessDashboardCache(context.business.id);
     return NextResponse.json({ log }, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Could not create waste log" }, { status: 500 });

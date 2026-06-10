@@ -36,6 +36,23 @@ supabase db push
 Add `http://localhost:3000/auth/callback` and the production equivalent to the
 Supabase Auth redirect allow list.
 
+## Supplier invoice OCR (Python)
+
+Invoice uploads use a small Python service (`services/ocr`) with **pdfplumber**,
+**pytesseract**, and **openpyxl**. See [`services/ocr/README.md`](services/ocr/README.md)
+for Tesseract and Poppler setup.
+
+```powershell
+cd services/ocr
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Add `OCR_SERVICE_URL=http://127.0.0.1:8000` to `.env`. OpenAI remains optional
+for smarter menu matching and waste insights.
+
 ## Verification
 
 ```powershell

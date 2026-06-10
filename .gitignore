@@ -5,4 +5,5 @@ out
 npm-debug.log*
 .next-dev*.log
 *.tsbuildinfo
-.env
+services/ocr/.venv
+services/ocr/**/__pycache__

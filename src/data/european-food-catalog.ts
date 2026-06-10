@@ -6,6 +6,7 @@ export interface EuropeanFoodEntry {
   description: string;
   unit: ProductUnit;
   category: string;
+  categorySlug: string;
   originCountryCodes: string[];
   availableCountryCodes: string[];
   aliases: string[];
@@ -39,6 +40,7 @@ function entry(
     description,
     unit,
     category: CATEGORY_NAMES[categorySlug] ?? categorySlug,
+    categorySlug,
     originCountryCodes,
     availableCountryCodes,
     aliases,

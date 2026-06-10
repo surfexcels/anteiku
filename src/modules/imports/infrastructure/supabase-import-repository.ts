@@ -3,6 +3,7 @@ import type {
   CreateSupplierImportInput,
   SupplierImportRepository,
 } from "@/src/modules/imports/application/import-repository";
+import type { ImportProcessingResult } from "@/src/modules/imports/domain/import-result";
 import type {
   ImportStatus,
   SupplierImport,
@@ -13,6 +14,7 @@ interface SupplierImportRow {
   original_filename: string;
   status: ImportStatus;
   error_message: string | null;
+  result: ImportProcessingResult | null;
   created_at: string;
   completed_at: string | null;
 }
@@ -23,6 +25,7 @@ function mapImport(row: SupplierImportRow): SupplierImport {
     originalFilename: row.original_filename,
     status: row.status,
     errorMessage: row.error_message,
+    result: row.result,
     createdAt: row.created_at,
     completedAt: row.completed_at,
   };
@@ -37,7 +40,7 @@ export class SupabaseSupplierImportRepository
     const { data, error } = await this.client
       .from("supplier_imports")
       .select(
-        "id, original_filename, status, error_message, created_at, completed_at",
+        "id, original_filename, status, error_message, result, created_at, completed_at",
       )
       .eq("business_id", businessId)
       .order("created_at", { ascending: false });
@@ -47,19 +50,20 @@ export class SupabaseSupplierImportRepository
   }
 
   async create(input: CreateSupplierImportInput): Promise<SupplierImport> {
-    const storagePath = `imports/${input.businessId}/${Date.now()}-${input.originalFilename}`;
-
+    const completed = Boolean(input.processingResult);
     const { data, error } = await this.client
       .from("supplier_imports")
       .insert({
         business_id: input.businessId,
-        storage_path: storagePath,
+        storage_path: input.storagePath,
         original_filename: input.originalFilename,
-        status: "pending",
+        status: completed ? "completed" : "pending",
+        result: input.processingResult ?? null,
+        completed_at: completed ? new Date().toISOString() : null,
         created_by: input.userId,
       })
       .select(
-        "id, original_filename, status, error_message, created_at, completed_at",
+        "id, original_filename, status, error_message, result, created_at, completed_at",
       )
       .single();
 

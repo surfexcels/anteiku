@@ -10,5 +10,6 @@ export interface CreateReportInput {
 
 export interface ReportRepository {
   list(businessId: string): Promise<Report[]>;
+  getById(businessId: string, reportId: string): Promise<Report | null>;
   create(input: CreateReportInput): Promise<Report>;
 }

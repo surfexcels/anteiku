@@ -6,4 +6,5 @@ import type {
 export interface BusinessRepository {
   getCurrentForUser(userId: string): Promise<CurrentBusiness | null>;
   getPrimaryLocation(businessId: string): Promise<BusinessLocation | null>;
+  updateCarbonDisclosure(businessId: string, enabled: boolean): Promise<void>;
 }

@@ -17,6 +17,7 @@ interface BusinessRow {
   country_code: string;
   currency_code: string;
   timezone: string;
+  carbon_disclosure_enabled: boolean;
 }
 
 export class SupabaseBusinessRepository implements BusinessRepository {
@@ -38,7 +39,7 @@ export class SupabaseBusinessRepository implements BusinessRepository {
     const typedMembership = membership as MembershipRow;
     const { data: business, error: businessError } = await this.client
       .from("businesses")
-      .select("id, name, country_code, currency_code, timezone")
+      .select("id, name, country_code, currency_code, timezone, carbon_disclosure_enabled")
       .eq("id", typedMembership.business_id)
       .single();
 
@@ -52,7 +53,20 @@ export class SupabaseBusinessRepository implements BusinessRepository {
       currencyCode: row.currency_code,
       timezone: row.timezone,
       role: typedMembership.role,
+      carbonDisclosureEnabled: row.carbon_disclosure_enabled ?? true,
     };
+  }
+
+  async updateCarbonDisclosure(
+    businessId: string,
+    enabled: boolean,
+  ): Promise<void> {
+    const { error } = await this.client
+      .from("businesses")
+      .update({ carbon_disclosure_enabled: enabled })
+      .eq("id", businessId);
+
+    if (error) throw error;
   }
 
   async getPrimaryLocation(
