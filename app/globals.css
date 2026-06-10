@@ -468,16 +468,23 @@ footer > span { color: #939a95; font-size: 11px; }
 .onboarding-form { display: grid; grid-template-columns: 1fr 1fr; }
 .onboarding-form label:first-child, .onboarding-form .button { grid-column: 1 / -1; }
 
-.app-shell { background: #f4f6f2; display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 100vh; }
+.app-shell { background: #f4f6f2; min-height: 100vh; }
 .app-sidebar {
   background: var(--forest-deep);
   color: white;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  left: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 27px 20px 20px;
-  position: sticky;
+  position: fixed;
   top: 0;
+  width: 220px;
+  z-index: 40;
 }
 .app-sidebar .app-brand { margin: 0 8px 45px; }
 .app-sidebar nav { display: flex; flex-direction: column; gap: 5px; }
@@ -496,7 +503,7 @@ footer > span { color: #939a95; font-size: 11px; }
 .app-business small { color: #80958a; font-size: 9px; margin-top: 3px; text-transform: capitalize; }
 .app-signout { background: transparent; border: 0; color: #84998e; cursor: pointer; font-size: 10px; padding: 4px 7px; }
 .app-signout:hover { color: white; }
-.app-content { min-width: 0; }
+.app-content { margin-left: 220px; min-height: 100vh; min-width: 0; }
 .products-page { margin: 0 auto; max-width: 1500px; padding: 45px clamp(24px, 4vw, 60px) 70px; }
 .app-page-header { align-items: flex-end; display: flex; justify-content: space-between; margin-bottom: 35px; }
 .app-page-header h1 { font-size: clamp(32px, 4vw, 47px); letter-spacing: -2.4px; margin-bottom: 9px; }
@@ -739,6 +746,17 @@ footer > span { color: #939a95; font-size: 11px; }
 .empco-checklist strong { display: block; font-size: 12px; margin-bottom: 4px; }
 .empco-checklist p { color: #8a938d; font-size: 10px; line-height: 1.45; margin: 0; }
 .field-hint { color: #8a938d; font-size: 10px; line-height: 1.45; margin: 0; }
+.calculation-explainer { background: #f7f9f6; border: 1px solid #e3e7e2; border-radius: 10px; margin-bottom: 14px; overflow: hidden; }
+.calculation-explainer-toggle { align-items: center; background: transparent; border: 0; color: var(--forest); cursor: pointer; display: flex; font-size: 11px; font-weight: 700; justify-content: space-between; padding: 12px 14px; width: 100%; }
+.calculation-explainer-toggle span { color: #8a938d; font-size: 14px; }
+.calculation-explainer-body { border-top: 1px solid #e3e7e2; color: #667068; font-size: 11px; line-height: 1.55; padding: 0 14px 14px; }
+.calculation-explainer-body p { margin: 12px 0 0; }
+.calculation-explainer-body ul { margin: 10px 0 0; padding-left: 18px; }
+.calculation-explainer-body li { margin-bottom: 6px; }
+.trend-single-day { background: #f7f9f6; border: 1px solid #e3e7e2; border-radius: 10px; display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 16px; }
+.trend-single-day-stat span { color: #8a938d; display: block; font-size: 9px; font-weight: 700; margin-bottom: 4px; text-transform: uppercase; }
+.trend-single-day-stat strong { font-size: 18px; }
+.trend-single-day-hint { color: #8a938d; font-size: 10px; grid-column: 1 / -1; margin: 0; }
 
 @media (max-width: 1120px) {
   .catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -750,7 +768,22 @@ footer > span { color: #939a95; font-size: 11px; }
   .auth-copy { margin: 70px 0; }
   .auth-proof { display: none; }
   .app-shell { display: block; }
-  .app-sidebar { align-items: center; flex-direction: row; flex-wrap: wrap; gap: 10px; min-height: auto; padding: 13px 18px; position: sticky; top: 0; z-index: 30; }
+  .app-content { margin-left: 0; }
+  .app-sidebar {
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
+    height: auto;
+    left: auto;
+    min-height: auto;
+    overflow: visible;
+    padding: 13px 18px;
+    position: sticky;
+    top: 0;
+    width: auto;
+    z-index: 30;
+  }
   .app-sidebar .app-brand { margin: 0; }
   .app-menu-toggle { display: flex; }
   .app-sidebar nav {

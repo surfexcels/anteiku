@@ -4,6 +4,11 @@ import type {
   CreateWasteLogInput,
   WasteRepository,
 } from "@/src/modules/waste/application/waste-repository";
+import {
+  buildLocalDateRange,
+  localDateKey,
+  startOfLocalDay,
+} from "@/src/lib/date/local-date-key";
 import type { ProductUnit } from "@/src/modules/catalog/domain/catalog-product";
 import type { Co2eSource } from "@/src/modules/sustainability/domain/carbon";
 import { resolveLogUnitCo2eG } from "@/src/modules/sustainability/application/resolve-log-co2e";
@@ -283,31 +288,23 @@ export class SupabaseWasteRepository implements WasteRepository {
   }
 
   async getDailyTrend(businessId: string, days = 7): Promise<DailyWasteTrend[]> {
-    const since = new Date();
-    since.setDate(since.getDate() - (days - 1));
-    since.setHours(0, 0, 0, 0);
+    const periodStart = startOfLocalDay(days - 1);
 
     const { data, error } = await this.client
       .from("waste_logs")
       .select("total_cost_minor, occurred_at")
       .eq("business_id", businessId)
-      .gte("occurred_at", since.toISOString());
+      .gte("occurred_at", periodStart.toISOString());
 
     if (error) throw error;
 
     const byDate = new Map<string, { totalCostMinor: number; itemCount: number }>();
-
-    for (let offset = 0; offset < days; offset += 1) {
-      const day = new Date(since);
-      day.setDate(since.getDate() + offset);
-      byDate.set(day.toISOString().slice(0, 10), {
-        totalCostMinor: 0,
-        itemCount: 0,
-      });
+    for (const date of buildLocalDateRange(days)) {
+      byDate.set(date, { totalCostMinor: 0, itemCount: 0 });
     }
 
     for (const row of data ?? []) {
-      const date = String(row.occurred_at).slice(0, 10);
+      const date = localDateKey(new Date(String(row.occurred_at)));
       const current = byDate.get(date);
       if (!current) continue;
       current.totalCostMinor += row.total_cost_minor;
@@ -407,16 +404,11 @@ export class SupabaseWasteRepository implements WasteRepository {
     businessId: string,
     days = 7,
   ): Promise<OverviewAnalytics> {
-    const currentSince = new Date();
-    currentSince.setDate(currentSince.getDate() - days);
-    currentSince.setHours(0, 0, 0, 0);
+    const periodStart = startOfLocalDay(days - 1);
+    const currentSince = periodStart;
 
-    const fetchSince = new Date(currentSince);
+    const fetchSince = new Date(periodStart);
     fetchSince.setDate(fetchSince.getDate() - days);
-
-    const trendStart = new Date();
-    trendStart.setDate(trendStart.getDate() - (days - 1));
-    trendStart.setHours(0, 0, 0, 0);
 
     const { data, error } = await this.client
       .from("waste_logs")
@@ -445,10 +437,7 @@ export class SupabaseWasteRepository implements WasteRepository {
     const byDate = new Map<string, { totalCostMinor: number; itemCount: number }>();
     const byDateCo2 = new Map<string, { totalCo2eG: number; itemCount: number }>();
 
-    for (let offset = 0; offset < days; offset += 1) {
-      const day = new Date(trendStart);
-      day.setDate(trendStart.getDate() + offset);
-      const key = day.toISOString().slice(0, 10);
+    for (const key of buildLocalDateRange(days)) {
       byDate.set(key, { totalCostMinor: 0, itemCount: 0 });
       byDateCo2.set(key, { totalCo2eG: 0, itemCount: 0 });
     }
@@ -495,7 +484,7 @@ export class SupabaseWasteRepository implements WasteRepository {
         reasonStats.itemCount += 1;
         byReason.set(reasonLabel, reasonStats);
 
-        const date = occurredAt.toISOString().slice(0, 10);
+        const date = localDateKey(occurredAt);
         const dayStats = byDate.get(date);
         if (dayStats) {
           dayStats.totalCostMinor += row.total_cost_minor;

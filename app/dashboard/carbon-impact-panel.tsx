@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { formatCo2e } from "@/src/modules/sustainability/application/carbon-equivalencies";
 import type { CarbonOverviewAnalytics } from "@/src/modules/sustainability/domain/carbon";
+import { CalculationExplainer } from "./calculation-explainer";
+import { CarbonCalculationCopy } from "./carbon-calculation-copy";
 
 export function CarbonImpactPanel({
   carbon,
@@ -19,8 +21,8 @@ export function CarbonImpactPanel({
         <div>
           <h2>Carbon from food waste</h2>
           <p>
-            CO₂e linked to wasted menu items — supports EU EmpCo substantiation
-            (Directive 2024/825).
+            Embodied CO₂e in food you threw away —{" "}
+            <strong>not CO₂ saved</strong>. Cutting waste reduces this over time.
           </p>
         </div>
         <Link className="text-button-app" href="/dashboard/sustainability" prefetch>
@@ -49,14 +51,18 @@ export function CarbonImpactPanel({
         <article className="carbon-stat">
           <span>Equivalent driving</span>
           <strong>{equivalencies.carKm} km</strong>
-          <p>Passenger car (EU average grid mix)</p>
+          <p>Illustrative · ~120 g CO₂e per km</p>
         </article>
         <article className="carbon-stat">
           <span>Phone charges</span>
           <strong>{equivalencies.smartphoneCharges}</strong>
-          <p>Indicative equivalency for staff briefings</p>
+          <p>Illustrative · ~8 g CO₂e per charge</p>
         </article>
       </div>
+
+      <CalculationExplainer title="How carbon from waste is calculated">
+        <CarbonCalculationCopy />
+      </CalculationExplainer>
     </section>
   );
 }

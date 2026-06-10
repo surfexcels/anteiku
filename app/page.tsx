@@ -363,6 +363,22 @@ export default function Home() {
               ["Do I need to track my full inventory?", "No. Anteiku is designed around quick daily waste logging, without the setup burden of a full inventory system."],
               ["How long does it take to get started?", "Add your core products and costs in a few minutes. You can record your first waste log the same day."],
               ["Can my team log waste too?", "Yes. The starter plan includes three team members, each with a simple, mobile-friendly logging flow."],
+              [
+                "How do you calculate waste cost?",
+                "Each waste log multiplies the quantity you enter by the unit cost on your menu (ingredient or prep cost, not selling price). That cost is snapshotted when you save, so reports stay accurate even if you change prices later. Daily charts group logs by local calendar day.",
+              ],
+              [
+                "How do you calculate carbon (CO₂e) from waste?",
+                "We estimate embodied greenhouse gases in wasted food: quantity × grams CO₂e per menu unit. New products get EU food-category benchmarks (Agribalyse / PEF-style averages). You can override factors on each product and mark them as manual, supplier, or verified. Throwing food away does not save CO₂ — it counts carbon already spent growing, processing, and delivering that food. You only reduce this number by wasting less.",
+              ],
+              [
+                "Is this ready for EU green-claims rules (EmpCo)?",
+                "Anteiku tracks and documents methodology so you can prepare for the Empowering Consumers Directive (EU 2024/825), in force from 27 September 2026. Benchmarks are fine for internal tracking; customer-facing carbon labels need verified or supplier-backed data. The Carbon compliance hub in the dashboard shows your readiness checklist.",
+              ],
+              [
+                "What are the driving and phone-charge equivalencies?",
+                "They are simple illustrations to help teams understand scale — for example ~120 g CO₂e per passenger-km and ~8 g CO₂e per smartphone charge. They are not regulatory conversions and should not be published as formal claims without your own substantiation.",
+              ],
             ].map(([question, answer]) => (
               <details key={question}><summary>{question}<Icon name="plus" /></summary><p>{answer}</p></details>
             ))}

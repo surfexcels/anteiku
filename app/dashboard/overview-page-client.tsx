@@ -175,6 +175,7 @@ export function OverviewPageClient() {
       <WasteTrendChart
         currencyCode={data.currencyCode}
         periodDays={data.periodDays}
+        periodTotalMinor={data.summary.totalCostMinor}
         trend={data.trend}
       />
       <SavingsScorecard currencyCode={data.currencyCode} savings={data.savings} />

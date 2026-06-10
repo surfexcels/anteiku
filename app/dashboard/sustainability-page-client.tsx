@@ -13,6 +13,8 @@ import type {
   CarbonOverviewAnalytics,
   EmpCoReadiness,
 } from "@/src/modules/sustainability/domain/carbon";
+import { CalculationExplainer } from "./calculation-explainer";
+import { CarbonCalculationCopy } from "./carbon-calculation-copy";
 import { PageSkeleton } from "./page-skeleton";
 
 interface SustainabilityBootstrap {
@@ -164,6 +166,10 @@ export function SustainabilityPageClient() {
           </p>
         </article>
       </section>
+
+      <CalculationExplainer title="How carbon from waste is calculated">
+        <CarbonCalculationCopy />
+      </CalculationExplainer>
 
       <section className="panel-app">
         <div className="panel-head-app">
