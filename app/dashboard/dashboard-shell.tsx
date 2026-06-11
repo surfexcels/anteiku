@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
@@ -15,6 +14,7 @@ import {
   hydrateCachedData,
 } from "@/src/lib/client/request-cache";
 import { prefetchDashboardBootstrap } from "@/src/lib/client/use-dashboard-bootstrap";
+import { AnteikuLogo } from "@/app/components/anteiku-logo";
 import { DashboardNav } from "./dashboard-nav";
 
 interface BusinessContext {
@@ -31,6 +31,7 @@ const PRIORITY_WARM_ROUTES: Array<{ cacheKey: string; url: string }> = [
   { cacheKey: overviewCacheKey(7), url: DASHBOARD_BOOTSTRAP_URL.overview },
   { cacheKey: DASHBOARD_CACHE.products, url: DASHBOARD_BOOTSTRAP_URL.products },
   { cacheKey: DASHBOARD_CACHE.waste, url: DASHBOARD_BOOTSTRAP_URL.waste },
+  { cacheKey: DASHBOARD_CACHE.inventory, url: DASHBOARD_BOOTSTRAP_URL.inventory },
 ];
 
 const DEFERRED_WARM_ROUTES: Array<{ cacheKey: string; url: string }> = [
@@ -97,23 +98,22 @@ export function DashboardShell({
   return (
     <div className="app-shell">
       <aside className="app-sidebar">
-        <Link className="app-brand" href="/dashboard/products" prefetch>
-          <span>an</span>
-          anteiku
-        </Link>
+        <AnteikuLogo href="/dashboard" size="sm" variant="sidebar" />
         <DashboardNav />
-        <div className="app-business">
-          <span>{business ? business.name.slice(0, 2).toUpperCase() : "…"}</span>
-          <div>
-            <strong>{business?.name ?? "Loading"}</strong>
-            <small>{business?.role ?? ""}</small>
+        <div className="app-sidebar-foot">
+          <div className="app-business">
+            <span>{business ? business.name.slice(0, 2).toUpperCase() : "…"}</span>
+            <div>
+              <strong>{business?.name ?? "Loading"}</strong>
+              <small>{business?.role ?? ""}</small>
+            </div>
           </div>
+          <form action={signOutAction}>
+            <button className="app-signout" type="submit">
+              Sign out
+            </button>
+          </form>
         </div>
-        <form action={signOutAction}>
-          <button className="app-signout" type="submit">
-            Sign out
-          </button>
-        </form>
       </aside>
       <div className="app-content">{children}</div>
     </div>

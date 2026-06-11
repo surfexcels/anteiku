@@ -38,13 +38,50 @@ export function InsightsPageClient() {
     );
   }
 
+  const newCount = data.recommendations.filter((r) => r.status === "new").length;
+  const acceptedCount = data.recommendations.filter(
+    (r) => r.status === "accepted",
+  ).length;
+  const potentialSavings = data.recommendations
+    .filter((r) => r.status !== "dismissed")
+    .reduce((sum, r) => sum + r.estimatedAnnualImpactMinor, 0);
+
   return (
     <main className="dashboard-overview">
       <header className="app-page-header">
         <div>
-          <span className="app-kicker">INSIGHTS</span>
+          <span className="app-kicker">Insights</span>
           <h1>Turn waste data into action.</h1>
-          <p>Each recommendation includes an estimated financial impact.</p>
+          <p>
+            AI-backed recommendations with estimated annual savings — accept what
+            you&apos;ll implement.
+          </p>
+        </div>
+        <div className="waste-page-stats">
+          <div className="waste-stat-pill">
+            <div>
+              <span>New</span>
+              <strong>{newCount}</strong>
+            </div>
+          </div>
+          <div className="waste-stat-pill">
+            <div>
+              <span>Accepted</span>
+              <strong>{acceptedCount}</strong>
+            </div>
+          </div>
+          <div className="waste-stat-pill">
+            <div>
+              <span>Potential / yr</span>
+              <strong>
+                {new Intl.NumberFormat(undefined, {
+                  style: "currency",
+                  currency: data.currencyCode,
+                  maximumFractionDigits: 0,
+                }).format(potentialSavings / 100)}
+              </strong>
+            </div>
+          </div>
         </div>
       </header>
       <InsightsPanel

@@ -94,6 +94,7 @@ export function QuickClosePanel({
     return (
       <section className="panel-app">
         <div className="empty-state-app">
+          <span className="empty-state-icon" aria-hidden>📦</span>
           <strong>Add menu items first</strong>
           <p>Quick close works from the products you set up with unit costs.</p>
         </div>
@@ -185,18 +186,19 @@ export function QuickClosePanel({
         })}
       </div>
 
-      <button
-        className="button primary full"
-        disabled={saving || entries.length === 0}
-        onClick={submitClose}
-        type="button"
-      >
-        {saving
-          ? "Saving..."
-          : `Save close-out (${entries.length} item${entries.length === 1 ? "" : "s"})`}
-      </button>
-
-      {message && <p className="quick-close-message">{message}</p>}
+      <div className="quick-close-footer">
+        <button
+          className="button primary full"
+          disabled={saving || entries.length === 0}
+          onClick={submitClose}
+          type="button"
+        >
+          {saving
+            ? "Saving..."
+            : `Save close-out (${entries.length} item${entries.length === 1 ? "" : "s"}) · ${formatMoney(estimatedTotalMinor, currencyCode)}`}
+        </button>
+        {message && <p className="quick-close-message">{message}</p>}
+      </div>
     </section>
   );
 }

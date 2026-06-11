@@ -10,6 +10,7 @@ import {
   sustainabilityCacheKey,
 } from "@/src/lib/client/dashboard-cache-keys";
 import { prefetchDashboardBootstrap } from "@/src/lib/client/use-dashboard-bootstrap";
+import { NavIcon } from "./nav-icons";
 
 function cacheKeyForPath(pathname: string) {
   if (pathname === "/dashboard") return overviewCacheKey(7);
@@ -18,25 +19,77 @@ function cacheKeyForPath(pathname: string) {
   if (pathname.startsWith("/dashboard/insights")) return DASHBOARD_CACHE.insights;
   if (pathname.startsWith("/dashboard/reports")) return DASHBOARD_CACHE.reports;
   if (pathname.startsWith("/dashboard/imports")) return DASHBOARD_CACHE.imports;
+  if (pathname.startsWith("/dashboard/inventory")) return DASHBOARD_CACHE.inventory;
   if (pathname.startsWith("/dashboard/sustainability")) return sustainabilityCacheKey(7);
   return null;
 }
 
-type NavLink = { href: string; label: string; exact?: boolean };
+type NavLink = {
+  href: string;
+  label: string;
+  icon: string;
+  exact?: boolean;
+  emphasis?: boolean;
+};
 
-const links: NavLink[] = [
-  { href: "/dashboard", label: "Overview", exact: true },
-  { href: "/dashboard/products", label: "Products" },
-  { href: "/dashboard/waste", label: "Waste log" },
-  { href: "/dashboard/sustainability", label: "Carbon" },
-  { href: "/dashboard/insights", label: "Insights" },
-  { href: "/dashboard/reports", label: "Reports" },
-  { href: "/dashboard/imports", label: "Imports" },
+const trackLinks: NavLink[] = [
+  { href: "/dashboard", label: "Overview", icon: "overview", exact: true },
+  { href: "/dashboard/waste", label: "Waste log", icon: "waste", emphasis: true },
+  { href: "/dashboard/inventory", label: "Inventory", icon: "inventory" },
+  { href: "/dashboard/sustainability", label: "Carbon", icon: "carbon" },
+];
+
+const manageLinks: NavLink[] = [
+  { href: "/dashboard/products", label: "Products", icon: "products" },
+  { href: "/dashboard/insights", label: "Insights", icon: "insights" },
+  { href: "/dashboard/reports", label: "Reports", icon: "reports" },
+  { href: "/dashboard/imports", label: "Imports", icon: "imports" },
 ];
 
 function isActive(pathname: string, link: NavLink) {
   if (link.exact) return pathname === link.href;
   return pathname === link.href || pathname.startsWith(`${link.href}/`);
+}
+
+function NavSection({
+  label,
+  links,
+  onNavigate,
+  pathname,
+  warmRoute,
+}: {
+  label: string;
+  links: NavLink[];
+  onNavigate: () => void;
+  pathname: string;
+  warmRoute: (href: string) => void;
+}) {
+  return (
+    <div className="app-nav-section">
+      <span className="app-nav-section-label">{label}</span>
+      {links.map((link) => (
+        <Link
+          className={[
+            isActive(pathname, link) ? "active" : "",
+            link.emphasis ? "emphasis" : "",
+          ]
+            .filter(Boolean)
+            .join(" ") || undefined}
+          href={link.href}
+          key={link.href}
+          onClick={onNavigate}
+          onMouseEnter={() => warmRoute(link.href)}
+          onFocus={() => warmRoute(link.href)}
+          prefetch
+        >
+          <span className="app-nav-icon">
+            <NavIcon name={link.icon} />
+          </span>
+          {link.label}
+        </Link>
+      ))}
+    </div>
+  );
 }
 
 export function DashboardNav() {
@@ -49,6 +102,10 @@ export function DashboardNav() {
     if (bootstrapUrl && cacheKey) {
       prefetchDashboardBootstrap(bootstrapUrl, cacheKey);
     }
+  }
+
+  function closeMenu() {
+    setOpen(false);
   }
 
   return (
@@ -66,26 +123,27 @@ export function DashboardNav() {
       </button>
 
       <nav className={open ? "app-nav-open" : undefined}>
-        {links.map((link) => (
-          <Link
-            className={isActive(pathname, link) ? "active" : undefined}
-            href={link.href}
-            key={link.href}
-            onClick={() => setOpen(false)}
-            onMouseEnter={() => warmRoute(link.href)}
-            onFocus={() => warmRoute(link.href)}
-            prefetch
-          >
-            {link.label}
-          </Link>
-        ))}
+        <NavSection
+          label="Track waste"
+          links={trackLinks}
+          onNavigate={closeMenu}
+          pathname={pathname}
+          warmRoute={warmRoute}
+        />
+        <NavSection
+          label="Manage"
+          links={manageLinks}
+          onNavigate={closeMenu}
+          pathname={pathname}
+          warmRoute={warmRoute}
+        />
       </nav>
 
       {open && (
         <button
           aria-label="Close menu"
           className="app-nav-backdrop"
-          onClick={() => setOpen(false)}
+          onClick={closeMenu}
           type="button"
         />
       )}

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AnteikuLogo } from "@/app/components/anteiku-logo";
 import { isSupabaseConfigured } from "@/src/lib/env";
 import { LoginForm } from "./login-form";
 
@@ -15,12 +15,13 @@ export default async function LoginPage({
   return (
     <main className="auth-page">
       <section className="auth-panel">
-        <Link className="auth-brand" href="/">
-          <span>an</span>
-          anteiku
-        </Link>
+        <AnteikuLogo
+          href="/"
+          size="lg"
+          tagline="Cafe profit intelligence"
+          variant="auth"
+        />
         <div className="auth-copy">
-          <span className="app-kicker">CAFE PROFIT INTELLIGENCE</span>
           <h1>Turn daily leftovers into better decisions.</h1>
           <p>
             Sign in to build your product menu, log waste, and see where your
@@ -35,9 +36,9 @@ export default async function LoginPage({
 
       <section className="auth-form-wrap">
         <div className="auth-form-card">
-          <span className="app-kicker">WELCOME TO ANTEIKU</span>
+          <span className="app-kicker">Sign in</span>
           <h2>Access your workspace</h2>
-          <p>Use your work email to continue.</p>
+          <p>Use your work email to continue to your dashboard.</p>
           {!configured || params.error === "configuration" ? (
             <div className="config-warning">
               Supabase is not configured yet. Add the values from{" "}

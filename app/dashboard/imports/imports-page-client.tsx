@@ -37,13 +37,42 @@ export function ImportsPageClient() {
     );
   }
 
+  const completed = data.imports.filter((i) => i.status === "completed").length;
+  const matchedLines = data.imports.reduce(
+    (sum, item) => sum + (item.result?.matchedCount ?? 0),
+    0,
+  );
+
   return (
     <main className="dashboard-overview">
       <header className="app-page-header">
         <div>
-          <span className="app-kicker">SUPPLIER IMPORTS</span>
+          <span className="app-kicker">Supplier imports</span>
           <h1>Match invoices to your menu.</h1>
-          <p>Queue supplier files for product and cost matching.</p>
+          <p>
+            Upload supplier PDFs or spreadsheets — OCR extracts costs and links them to
+            your products.
+          </p>
+        </div>
+        <div className="waste-page-stats">
+          <div className="waste-stat-pill">
+            <div>
+              <span>Uploads</span>
+              <strong>{data.imports.length}</strong>
+            </div>
+          </div>
+          <div className="waste-stat-pill">
+            <div>
+              <span>Completed</span>
+              <strong>{completed}</strong>
+            </div>
+          </div>
+          <div className="waste-stat-pill">
+            <div>
+              <span>Lines matched</span>
+              <strong>{matchedLines}</strong>
+            </div>
+          </div>
         </div>
       </header>
       <ImportsPanel initialImports={data.imports} />

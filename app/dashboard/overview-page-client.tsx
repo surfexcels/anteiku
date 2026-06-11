@@ -116,12 +116,12 @@ export function OverviewPageClient() {
 
       <OverviewAlerts alerts={data.alerts} />
 
-      <section className="metric-grid-app metric-grid-overview">
-        <article className="metric-card-app featured">
-          <span>Waste cost ({periodLabel})</span>
+      <section className="overview-hero">
+        <div className="overview-hero-main">
+          <span className="overview-hero-label">Waste cost · {periodLabel}</span>
           <strong>{formatMoney(data.summary.totalCostMinor, data.currencyCode)}</strong>
           <p>
-            {data.summary.itemCount} entries
+            {data.summary.itemCount} entries logged
             {weekChange !== null && (
               <>
                 {" "}
@@ -133,7 +133,18 @@ export function OverviewPageClient() {
               </>
             )}
           </p>
-        </article>
+        </div>
+        <div className="overview-hero-actions">
+          <Link className="button primary small" href="/dashboard/waste" prefetch>
+            Log waste
+          </Link>
+          <Link className="button ghost small" href="/dashboard/products" prefetch>
+            Manage menu
+          </Link>
+        </div>
+      </section>
+
+      <section className="metric-grid-app metric-grid-overview">
         <article className="metric-card-app">
           <span>Daily average</span>
           <strong>{formatMoney(data.dailyAverageMinor, data.currencyCode)}</strong>
@@ -194,6 +205,7 @@ export function OverviewPageClient() {
           </div>
           {data.summary.topProducts.length === 0 ? (
             <div className="empty-state-app">
+              <span className="empty-state-icon" aria-hidden>📋</span>
               <strong>No waste logged yet</strong>
               <p>Add products to your menu, then log today&apos;s waste.</p>
               <Link className="button primary small" href="/dashboard/waste" prefetch>

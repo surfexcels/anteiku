@@ -1,3 +1,4 @@
+import { AnteikuLogo } from "@/app/components/anteiku-logo";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/src/lib/auth/require-user";
 import { SupabaseBusinessRepository } from "@/src/modules/business/infrastructure/supabase-business-repository";
@@ -27,6 +28,7 @@ export default async function OnboardingPage() {
   return (
     <main className="onboarding-page">
       <section className="onboarding-card">
+        <AnteikuLogo className="onboarding-logo" size="md" variant="default" />
         <span className="app-kicker">ONE MINUTE SETUP</span>
         <h1>Tell us about your cafe.</h1>
         <p>

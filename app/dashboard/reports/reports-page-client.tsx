@@ -38,13 +38,51 @@ export function ReportsPageClient() {
     );
   }
 
+  const totalWasteMinor = data.reports.reduce(
+    (sum, r) => sum + r.summary.totalCostMinor,
+    0,
+  );
+  const totalEntries = data.reports.reduce(
+    (sum, r) => sum + r.summary.logCount,
+    0,
+  );
+
   return (
     <main className="dashboard-overview">
       <header className="app-page-header">
         <div>
-          <span className="app-kicker">REPORTS</span>
+          <span className="app-kicker">Reports</span>
           <h1>Exportable waste summaries.</h1>
-          <p>Review period totals and top wasted products.</p>
+          <p>
+            Generate period reports with totals, top products, and CSV export for
+            your team or accountant.
+          </p>
+        </div>
+        <div className="waste-page-stats">
+          <div className="waste-stat-pill">
+            <div>
+              <span>Reports</span>
+              <strong>{data.reports.length}</strong>
+            </div>
+          </div>
+          <div className="waste-stat-pill">
+            <div>
+              <span>Total logged</span>
+              <strong>
+                {new Intl.NumberFormat(undefined, {
+                  style: "currency",
+                  currency: data.currencyCode,
+                  maximumFractionDigits: 0,
+                }).format(totalWasteMinor / 100)}
+              </strong>
+            </div>
+          </div>
+          <div className="waste-stat-pill">
+            <div>
+              <span>Entries</span>
+              <strong>{totalEntries}</strong>
+            </div>
+          </div>
         </div>
       </header>
       <ReportsPanel currencyCode={data.currencyCode} initialReports={data.reports} />

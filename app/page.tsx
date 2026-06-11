@@ -1,5 +1,6 @@
 "use client";
 
+import { AnteikuLogo } from "@/app/components/anteiku-logo";
 import { FormEvent, ReactNode, useMemo, useState } from "react";
 
 type IconName =
@@ -76,14 +77,7 @@ const products = [
 ];
 
 function Logo() {
-  return (
-    <a className="logo" href="#">
-      <span className="logo-mark">
-        <Icon name="coffee" size={18} strokeWidth={2.2} />
-      </span>
-      <span>anteiku</span>
-    </a>
-  );
+  return <AnteikuLogo href="#" size="md" variant="default" />;
 }
 
 function DashboardPreview() {

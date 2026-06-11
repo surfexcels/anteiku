@@ -44,6 +44,7 @@ export function invalidateProductCaches() {
 
 export function invalidateWasteCaches() {
   invalidateCachedData(DASHBOARD_CACHE.waste);
+  invalidateCachedData(DASHBOARD_CACHE.inventory);
   invalidateCachedData(overviewCacheKey(7));
   invalidateCachedData(overviewCacheKey(30));
   invalidateSustainabilityCaches();
@@ -67,4 +68,11 @@ export function invalidateReportsCaches() {
 
 export function invalidateImportsCaches() {
   invalidateCachedData(DASHBOARD_CACHE.imports);
+}
+
+export function invalidateInventoryCaches(stockDate?: string) {
+  invalidateCachedData(DASHBOARD_CACHE.inventory);
+  if (stockDate) {
+    invalidateCachedData(`${DASHBOARD_CACHE.inventory}:${stockDate}`);
+  }
 }

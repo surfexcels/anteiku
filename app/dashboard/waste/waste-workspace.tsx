@@ -55,34 +55,36 @@ export function WasteWorkspace({
 
   return (
     <div className={`waste-workspace${isPending ? " is-switching" : ""}`}>
-      <div className="waste-tabs" role="tablist">
-        <button
-          aria-selected={tab === "quick"}
-          className={tab === "quick" ? "active" : undefined}
-          onClick={() => switchTab("quick")}
-          role="tab"
-          type="button"
-        >
-          Quick close
-        </button>
-        <button
-          aria-selected={tab === "single"}
-          className={tab === "single" ? "active" : undefined}
-          onClick={() => switchTab("single")}
-          role="tab"
-          type="button"
-        >
-          Log one item
-        </button>
-        <button
-          aria-selected={tab === "import"}
-          className={tab === "import" ? "active" : undefined}
-          onClick={() => switchTab("import")}
-          role="tab"
-          type="button"
-        >
-          Import Excel
-        </button>
+      <div className="waste-tabs-row">
+        <div className="waste-tabs" role="tablist">
+          <button
+            aria-selected={tab === "quick"}
+            className={tab === "quick" ? "active" : undefined}
+            onClick={() => switchTab("quick")}
+            role="tab"
+            type="button"
+          >
+            Quick close
+          </button>
+          <button
+            aria-selected={tab === "single"}
+            className={tab === "single" ? "active" : undefined}
+            onClick={() => switchTab("single")}
+            role="tab"
+            type="button"
+          >
+            Log one item
+          </button>
+          <button
+            aria-selected={tab === "import"}
+            className={tab === "import" ? "active" : undefined}
+            onClick={() => switchTab("import")}
+            role="tab"
+            type="button"
+          >
+            Import Excel
+          </button>
+        </div>
         <a className="waste-export-link" href="/api/waste-logs/export?days=30">
           Export CSV
         </a>
@@ -118,34 +120,53 @@ export function WasteWorkspace({
           </div>
           <span>{logs.length}</span>
         </div>
-        <div className="data-list">
-          {logs.map((log) => (
-            <article className="data-row" key={log.id}>
-              <div>
-                <strong>{log.productName}</strong>
-                <span>
-                  {log.quantity} units
-                  {log.wasteReasonLabel ? ` · ${log.wasteReasonLabel}` : ""}
-                </span>
-              </div>
-              <div className="data-row-meta">
-                <small>{new Date(log.occurredAt).toLocaleString()}</small>
-                <b>
-                  {new Intl.NumberFormat(undefined, {
-                    style: "currency",
-                    currency: log.currencyCode,
-                  }).format(log.totalCostMinor / 100)}
-                </b>
-              </div>
-            </article>
-          ))}
-          {logs.length === 0 && (
-            <div className="empty-state-app">
-              <strong>No entries yet</strong>
-              <p>Use Quick close at the end of the day instead of a spreadsheet row.</p>
-            </div>
-          )}
-        </div>
+        {logs.length === 0 ? (
+          <div className="empty-state-app">
+            <span className="empty-state-icon" aria-hidden>🗑️</span>
+            <strong>No entries yet</strong>
+            <p>Use Quick close at the end of the day instead of a spreadsheet row.</p>
+          </div>
+        ) : (
+          <div className="waste-log-table-wrap">
+            <table className="waste-log-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>When</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {logs.map((log) => (
+                  <tr key={log.id}>
+                    <td>
+                      <div className="waste-log-product">
+                        <strong>{log.productName}</strong>
+                        <small>
+                          {log.quantity} units
+                          {log.wasteReasonLabel ? ` · ${log.wasteReasonLabel}` : ""}
+                        </small>
+                      </div>
+                    </td>
+                    <td>
+                      <span className="waste-log-date">
+                        {new Date(log.occurredAt).toLocaleString()}
+                      </span>
+                    </td>
+                    <td>
+                      <span className="waste-log-amount">
+                        {new Intl.NumberFormat(undefined, {
+                          style: "currency",
+                          currency: log.currencyCode,
+                        }).format(log.totalCostMinor / 100)}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </div>
   );

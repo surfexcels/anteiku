@@ -6,6 +6,7 @@ export const DASHBOARD_CACHE = {
   insights: "dashboard-insights",
   reports: "dashboard-reports",
   imports: "dashboard-imports",
+  inventory: "dashboard-inventory",
   sustainability: "dashboard-sustainability",
 } as const;
 
@@ -33,8 +34,21 @@ export const DASHBOARD_BOOTSTRAP_URL = {
   insights: "/api/dashboard/insights",
   reports: "/api/dashboard/reports",
   imports: "/api/dashboard/imports",
+  inventory: "/api/dashboard/inventory",
   sustainability: sustainabilityBootstrapUrl(7),
 } as const;
+
+export function inventoryCacheKey(date?: string) {
+  return date
+    ? `${DASHBOARD_CACHE.inventory}:${date}`
+    : DASHBOARD_CACHE.inventory;
+}
+
+export function inventoryBootstrapUrl(date?: string) {
+  return date
+    ? `/api/dashboard/inventory?date=${date}`
+    : DASHBOARD_BOOTSTRAP_URL.inventory;
+}
 
 export function bootstrapUrlForPath(pathname: string) {
   if (pathname === "/dashboard" || pathname === "/dashboard/") {
@@ -54,6 +68,9 @@ export function bootstrapUrlForPath(pathname: string) {
   }
   if (pathname.startsWith("/dashboard/imports")) {
     return DASHBOARD_BOOTSTRAP_URL.imports;
+  }
+  if (pathname.startsWith("/dashboard/inventory")) {
+    return DASHBOARD_BOOTSTRAP_URL.inventory;
   }
   if (pathname.startsWith("/dashboard/sustainability")) {
     return sustainabilityBootstrapUrl(7);
