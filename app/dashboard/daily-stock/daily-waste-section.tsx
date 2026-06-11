@@ -91,7 +91,7 @@ export function DailyWasteSection({
           Log one item
         </button>
         <Link className="waste-export-link" href="/dashboard/waste" prefetch>
-          Full waste log →
+          Full waste log -&gt;
         </Link>
       </div>
 
@@ -142,7 +142,7 @@ export function DailyWasteSection({
                         <strong>{log.productName}</strong>
                         <small>
                           {log.quantity} units
-                          {log.wasteReasonLabel ? ` · ${log.wasteReasonLabel}` : ""}
+                          {log.wasteReasonLabel ? ` / ${log.wasteReasonLabel}` : ""}
                         </small>
                       </div>
                     </td>

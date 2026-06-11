@@ -22,7 +22,7 @@ export function StockHandoffBanner({
       <div>
         <span className="stock-handoff-kicker">Carry forward</span>
         <strong>
-          {priorDay.stockDate} closing → {stockDate} opening
+          {priorDay.stockDate} closing -&gt; {stockDate} opening
         </strong>
         <p>
           Yesterday&apos;s closing counts can pre-fill today&apos;s opening stock.

@@ -19,7 +19,7 @@ export function DailyStockWasteBridge({
     <section className="daily-stock-bridge panel-app">
       <div className="panel-head-app">
         <div>
-          <span className="daily-stock-bridge-kicker">Daily stock · Log waste</span>
+          <span className="daily-stock-bridge-kicker">Daily stock / Log waste</span>
           <h2>Waste for {stockDate}</h2>
           <p>
             Only what you log here (and on this date) subtracts when you close the
@@ -76,7 +76,7 @@ export function WasteLogDailyStockBridge({
       <div>
         <span className="waste-daily-bridge-kicker">Tied to daily stock</span>
         <strong>
-          {stockDate}: {todayWasteCount} waste entries ·{" "}
+          {stockDate}: {todayWasteCount} waste entries /{" "}
           {new Intl.NumberFormat(undefined, {
             style: "currency",
             currency: currencyCode,
@@ -87,7 +87,7 @@ export function WasteLogDailyStockBridge({
             ? "Open today's stock session to reconcile waste with opening and closing counts."
             : inventoryDayStatus === "open"
               ? "Waste logged today will subtract when you enter closing stock."
-              : "Today is closed — waste is locked into the day summary."}
+              : "Today is closed - waste is locked into the day summary."}
         </p>
       </div>
       <Link className="button primary small" href={inventoryHref} prefetch>

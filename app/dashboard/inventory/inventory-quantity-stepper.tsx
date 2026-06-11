@@ -35,7 +35,7 @@ export function InventoryQuantityStepper({
         onClick={() => adjust(-step)}
         type="button"
       >
-        −
+        -
       </button>
       <input
         aria-label={ariaLabel}

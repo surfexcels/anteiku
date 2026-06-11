@@ -8,26 +8,31 @@ const TAB_META: Array<{
   id: DailyStockTab;
   label: string;
   hint: string;
+  step: string;
 }> = [
   {
     id: "opening",
     label: "Opening",
     hint: "Start of day",
+    step: "1",
   },
   {
     id: "waste",
     label: "Log waste",
     hint: "Today's counts",
+    step: "2",
   },
   {
     id: "closing",
     label: "Closing",
     hint: "End of day",
+    step: "3",
   },
   {
     id: "summary",
     label: "Summary",
     hint: "Reconcile & handoff",
+    step: "4",
   },
 ];
 
@@ -67,8 +72,11 @@ export function DailyStockTabs({
 
           const content = (
             <>
-              <strong>{tab.label}</strong>
-              <small>{tab.hint}</small>
+              <span className="daily-stock-tab-step">{tab.step}</span>
+              <span>
+                <strong>{tab.label}</strong>
+                <small>{tab.hint}</small>
+              </span>
             </>
           );
 

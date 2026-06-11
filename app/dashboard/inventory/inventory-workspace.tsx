@@ -26,6 +26,14 @@ import { InventoryQuantityStepper } from "./inventory-quantity-stepper";
 
 type Quantities = Record<string, { opening: number; closing: number }>;
 
+type DailyStockFlowState = {
+  currentStep: string;
+  nextAction: string;
+  nextTab: DailyStockTab | null;
+  progressLabel: string;
+  statusLabel: string;
+};
+
 function buildQuantities(
   products: BusinessProduct[],
   day: InventoryDayDetail | null,
@@ -95,6 +103,13 @@ export function InventoryWorkspace({
   const isToday = stockDate === localDateKey(new Date());
   const dayStatus = day?.status ?? null;
   const reconciliation = useMemo(() => day?.lines ?? [], [day]);
+  const flowState = getDailyStockFlowState({
+    activeTab,
+    dayStatus,
+    hasProducts: products.length > 0,
+    wasteCount: wasteLogs.length,
+  });
+  const flowNextTab = flowState.nextTab;
 
   function setQuantity(
     productId: string,
@@ -256,6 +271,14 @@ export function InventoryWorkspace({
         stockDate={stockDate}
       />
 
+      <DailyStockFlowGuide
+        currentStep={flowState.currentStep}
+        nextAction={flowState.nextAction}
+        onNext={flowNextTab ? () => onTabChange(flowNextTab) : undefined}
+        progressLabel={flowState.progressLabel}
+        statusLabel={flowState.statusLabel}
+      />
+
       {activeTab === "opening" && (
         <div className="daily-stock-tab-panel active">
           <StockHandoffBanner priorDay={priorDay} stockDate={stockDate} />
@@ -307,7 +330,7 @@ export function InventoryWorkspace({
                     onClick={openDay}
                     type="button"
                   >
-                    {saving ? "Saving…" : "Save opening stock"}
+                    {saving ? "Saving..." : "Save opening stock"}
                   </button>
                 </>
               )}
@@ -319,7 +342,7 @@ export function InventoryWorkspace({
                   <h2>Opening stock</h2>
                   <p>
                     {isClosed
-                      ? "This day is closed — opening counts are locked."
+                      ? "This day is closed - opening counts are locked."
                       : "Adjust if counts changed after you opened the day."}
                   </p>
                 </div>
@@ -341,7 +364,7 @@ export function InventoryWorkspace({
                     onClick={saveOpening}
                     type="button"
                   >
-                    {saving ? "Saving…" : "Update opening stock"}
+                    {saving ? "Saving..." : "Update opening stock"}
                   </button>
                 </>
               ) : (
@@ -455,7 +478,7 @@ export function InventoryWorkspace({
                   onClick={closeDay}
                   type="button"
                 >
-                  {saving ? "Closing…" : "Close day with these counts"}
+                  {saving ? "Closing..." : "Close day with these counts"}
                 </button>
               </section>
             </>
@@ -482,7 +505,7 @@ export function InventoryWorkspace({
               <section className="inventory-formula-banner">
                 <strong>Reconciliation</strong>
                 <p>
-                  <span>Usage (sold / consumed)</span> = Opening − Closing − Waste
+                  <span>Usage (sold / consumed)</span> = Opening - Closing - Waste
                 </p>
               </section>
 
@@ -492,8 +515,8 @@ export function InventoryWorkspace({
                     <h2>Day summary</h2>
                     <p>
                       {isClosed
-                        ? "Closed day — opening, waste, closing, and implied usage."
-                        : "Live preview — close the day to lock these numbers."}
+                        ? "Closed day - opening, waste, closing, and implied usage."
+                        : "Live preview - close the day to lock these numbers."}
                     </p>
                   </div>
                   <div className="inventory-export-actions">
@@ -569,9 +592,9 @@ export function InventoryWorkspace({
                               {formatMoney(line.wasteCostMinor, currencyCode)}
                             </small>
                           </td>
-                          <td>{line.closingQuantity ?? "—"}</td>
+                          <td>{line.closingQuantity ?? "-"}</td>
                           <td>
-                            {line.usageQuantity ?? "—"}
+                            {line.usageQuantity ?? "-"}
                             {line.varianceQuantity ? (
                               <small className="inventory-variance-tag">
                                 +{line.varianceQuantity} unaccounted
@@ -581,7 +604,7 @@ export function InventoryWorkspace({
                           <td>
                             <span className="waste-log-amount">
                               {line.usageCostMinor === null
-                                ? "—"
+                                ? "-"
                                 : formatMoney(line.usageCostMinor, currencyCode)}
                             </span>
                           </td>
@@ -624,7 +647,7 @@ export function InventoryWorkspace({
           >
             Waste tab
           </button>{" "}
-          as it happens — it feeds closing reconciliation.
+          as it happens - it feeds closing reconciliation.
         </p>
       )}
 
@@ -632,6 +655,121 @@ export function InventoryWorkspace({
         <div className={`app-toast import-toast ${messageTone}`}>{message}</div>
       )}
     </div>
+  );
+}
+
+function getDailyStockFlowState({
+  activeTab,
+  dayStatus,
+  hasProducts,
+  wasteCount,
+}: {
+  activeTab: DailyStockTab;
+  dayStatus: "open" | "closed" | null;
+  hasProducts: boolean;
+  wasteCount: number;
+}): DailyStockFlowState {
+  if (!hasProducts) {
+    return {
+      currentStep: "Setup",
+      nextAction: "Add products before starting stock counts.",
+      nextTab: null,
+      progressLabel: "Menu needed",
+      statusLabel: "Blocked",
+    };
+  }
+
+  if (!dayStatus) {
+    return {
+      currentStep: "Step 1 of 4",
+      nextAction: "Save opening stock to unlock waste and closing.",
+      nextTab: activeTab === "opening" ? null : "opening",
+      progressLabel: "Opening not saved",
+      statusLabel: "Not started",
+    };
+  }
+
+  if (dayStatus === "closed") {
+    return {
+      currentStep: "Step 4 of 4",
+      nextAction: "Review the summary, export if needed, then start the next day.",
+      nextTab: activeTab === "summary" ? null : "summary",
+      progressLabel: "Ready for handoff",
+      statusLabel: "Closed",
+    };
+  }
+
+  if (activeTab === "opening") {
+    return {
+      currentStep: "Step 1 of 4",
+      nextAction: "Opening is saved. Log waste as items leave the shelf.",
+      nextTab: "waste",
+      progressLabel: "Opening saved",
+      statusLabel: "Open",
+    };
+  }
+
+  if (activeTab === "waste") {
+    return {
+      currentStep: "Step 2 of 4",
+      nextAction:
+        wasteCount > 0
+          ? "Waste is captured. Continue to closing when the day is ending."
+          : "Log waste when it happens, or continue to closing if none was wasted.",
+      nextTab: "closing",
+      progressLabel: `${wasteCount} waste ${wasteCount === 1 ? "entry" : "entries"}`,
+      statusLabel: "In progress",
+    };
+  }
+
+  if (activeTab === "closing") {
+    return {
+      currentStep: "Step 3 of 4",
+      nextAction: "Enter closing counts and close the day to lock reconciliation.",
+      nextTab: null,
+      progressLabel: "Closing counts needed",
+      statusLabel: "In progress",
+    };
+  }
+
+  return {
+    currentStep: "Step 4 of 4",
+    nextAction: "This is a live preview. Close the day when counts are final.",
+    nextTab: "closing",
+    progressLabel: "Preview",
+    statusLabel: "Open",
+  };
+}
+
+function DailyStockFlowGuide({
+  currentStep,
+  nextAction,
+  onNext,
+  progressLabel,
+  statusLabel,
+}: {
+  currentStep: string;
+  nextAction: string;
+  onNext?: () => void;
+  progressLabel: string;
+  statusLabel: string;
+}) {
+  return (
+    <section className="daily-stock-flow-guide">
+      <div>
+        <span>{currentStep}</span>
+        <strong>{nextAction}</strong>
+      </div>
+      <div className="daily-stock-flow-guide-meta">
+        <em>{statusLabel}</em>
+        <small>{progressLabel}</small>
+        {onNext ? (
+          <button className="button ghost small" onClick={onNext} type="button">
+            Go next
+          </button>
+        ) : null}
+      </div>
+    </section>
   );
 }
 

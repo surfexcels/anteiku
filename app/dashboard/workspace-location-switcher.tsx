@@ -17,7 +17,7 @@ export function WorkspaceLocationSwitcher({
   activeLocationId: string;
   locations: WorkspaceLocation[];
   onChanged?: () => void;
-  variant?: "sidebar" | "floor";
+  variant?: "sidebar" | "floor" | "bar";
 }) {
   const [pending, setPending] = useState(false);
 
@@ -52,7 +52,9 @@ export function WorkspaceLocationSwitcher({
       className={
         variant === "floor"
           ? "workspace-location-switcher floor"
-          : "workspace-location-switcher"
+          : variant === "bar"
+            ? "workspace-location-switcher bar"
+            : "workspace-location-switcher"
       }
     >
       <span>Location</span>

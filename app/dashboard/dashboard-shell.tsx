@@ -69,6 +69,15 @@ export function DashboardShell({
     return cached;
   });
 
+  async function refreshWorkspaceAfterLocationChange() {
+    invalidateWorkspaceCaches();
+    const response = await fetch(DASHBOARD_BOOTSTRAP_URL.business);
+    if (response.ok) {
+      setWorkspace(await response.json());
+    }
+    router.refresh();
+  }
+
   useEffect(() => {
     let cancelled = false;
 
@@ -127,25 +136,18 @@ export function DashboardShell({
                 workspace.location?.id ?? workspace.locations[0]?.id ?? ""
               }
               locations={workspace.locations}
-              onChanged={async () => {
-                invalidateWorkspaceCaches();
-                const response = await fetch(DASHBOARD_BOOTSTRAP_URL.business);
-                if (response.ok) {
-                  setWorkspace(await response.json());
-                }
-                router.refresh();
-              }}
+              onChanged={refreshWorkspaceAfterLocationChange}
             />
           ) : null}
           <div className="app-business">
             <span>
-              {workspace ? workspace.business.name.slice(0, 2).toUpperCase() : "…"}
+              {workspace ? workspace.business.name.slice(0, 2).toUpperCase() : "..."}
             </span>
             <div>
               <strong>{workspace?.business.name ?? "Loading"}</strong>
               <small>
                 {workspace?.location.name
-                  ? `${workspace.location.name} · ${workspace.business.role}`
+                  ? `${workspace.location.name} / ${workspace.business.role}`
                   : workspace?.business.role ?? ""}
               </small>
             </div>
@@ -174,8 +176,54 @@ export function DashboardShell({
           }
         }}
       >
+        <WorkspaceContextBand
+          onLocationChanged={refreshWorkspaceAfterLocationChange}
+          workspace={workspace}
+        />
         {children}
       </div>
     </div>
+  );
+}
+
+function WorkspaceContextBand({
+  onLocationChanged,
+  workspace,
+}: {
+  onLocationChanged: () => Promise<void>;
+  workspace: BusinessContext | null;
+}) {
+  const activeLocationId =
+    workspace?.location?.id ?? workspace?.locations[0]?.id ?? "";
+  const hasMultipleLocations = (workspace?.locations.length ?? 0) > 1;
+
+  return (
+    <section className="workspace-context-band" aria-label="Active workspace">
+      <div className="workspace-context-copy">
+        <span>Active workspace</span>
+        <strong>
+          {workspace
+            ? `${workspace.business.name} / ${workspace.location.name}`
+            : "Loading workspace"}
+        </strong>
+        <p>
+          Stock, waste, reports, and floor mode use this location until you
+          switch it.
+        </p>
+      </div>
+      {workspace && hasMultipleLocations ? (
+        <WorkspaceLocationSwitcher
+          activeLocationId={activeLocationId}
+          locations={workspace.locations}
+          onChanged={onLocationChanged}
+          variant="bar"
+        />
+      ) : (
+        <div className="workspace-context-single">
+          <span>Location</span>
+          <strong>{workspace?.location.name ?? "Loading"}</strong>
+        </div>
+      )}
+    </section>
   );
 }
