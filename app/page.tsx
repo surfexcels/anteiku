@@ -100,6 +100,7 @@ function DashboardPreview() {
         <Logo />
         <nav>
           <a className="nav-item active" href="#dashboard"><Icon name="grid" />Overview</a>
+          <a className="nav-item" href="#waste"><Icon name="bag" />Inventory</a>
           <a className="nav-item" href="#waste"><Icon name="bag" />Waste log</a>
           <a className="nav-item" href="#insights"><Icon name="spark" />Insights<span className="new-pill">3</span></a>
           <a className="nav-item" href="#reports"><Icon name="report" />Reports</a>
@@ -251,10 +252,10 @@ export default function Home() {
           <div className="hero-noise" />
           <div className="hero-copy">
             <div className="announcement"><span>New</span> Built for independent cafés <Icon name="arrow" size={15} /></div>
-            <h1>Find the leaks in your <em>café profit.</em></h1>
-            <p>Track what gets thrown away, see exactly what it costs, and make smarter production decisions. No spreadsheets. No guesswork.</p>
+            <h1>Run your café with <em>clearer profit.</em></h1>
+            <p>Daily inventory, waste tracking, supplier imports, and smart insights — built for independent cafés who want margin clarity without enterprise software.</p>
             <div className="hero-actions">
-              <a className="button primary large" href="#calculator">Calculate my waste losses <Icon name="arrow" size={19} /></a>
+              <a className="button primary large" href="#calculator">See my margin leaks <Icon name="arrow" size={19} /></a>
               <a className="button ghost large" href="#product"><span className="play">▶</span>See how it works</a>
             </div>
             <div className="proof"><span className="proof-avatars"><i>AM</i><i>LB</i><i>CK</i></span><span><b>Made with café owners</b><small>Simple enough for the morning rush</small></span></div>
@@ -299,45 +300,45 @@ export default function Home() {
         <section className="section problem-section" id="product">
           <div className="section-label">THE REAL PROBLEM</div>
           <div className="section-intro split">
-            <h2>Your bin is quietly eating your margin.</h2>
-            <p>Most cafés know they waste food. Almost none know what it actually costs them, which days hurt most, or what to change tomorrow.</p>
+            <h2>Margin leaks hide in stock, waste, and prices.</h2>
+            <p>Most cafés track sales but not what leaves the shelf — through waste, miscounts, or rising supplier costs. Anteiku connects the dots in euros.</p>
           </div>
           <div className="problem-grid">
-            <article><span className="number">01</span><Icon name="clock" size={28} /><h3>Waste gets logged too late</h3><p>Paper notes and memory leave blind spots. Anteiku takes less than 30 seconds at close.</p></article>
-            <article><span className="number">02</span><Icon name="chart" size={28} /><h3>Costs stay invisible</h3><p>See waste in euros, not just units, so every decision connects directly to your margin.</p></article>
-            <article><span className="number">03</span><Icon name="light" size={28} /><h3>Data never becomes action</h3><p>Get practical recommendations with an estimated financial impact, not another spreadsheet.</p></article>
+            <article><span className="number">01</span><Icon name="clock" size={28} /><h3>No daily stock rhythm</h3><p>Opening and closing counts stay in heads or notebooks. Anteiku ties them to your menu in minutes.</p></article>
+            <article><span className="number">02</span><Icon name="chart" size={28} /><h3>Waste and costs stay vague</h3><p>See waste, usage, and supplier price changes in euros — not guesswork at month-end.</p></article>
+            <article><span className="number">03</span><Icon name="light" size={28} /><h3>Insights never ship</h3><p>Get recommendations with estimated savings, plus exports your accountant can use.</p></article>
           </div>
         </section>
 
         <section className="dashboard-section">
           <div className="section-label light">YOUR PROFIT, MADE VISIBLE</div>
           <div className="section-intro centered light-copy">
-            <h2>Everything you need to waste less. Nothing you don’t.</h2>
-            <p>A calm, focused view of where money is going and what to do next.</p>
+            <h2>Inventory, waste, imports, and insights — one calm workspace.</h2>
+            <p>Daily operations and margin intelligence without the weight of a full ERP.</p>
           </div>
           <DashboardPreview />
         </section>
 
         <section className="section steps-section" id="how">
           <div className="section-label">HOW IT WORKS</div>
-          <div className="section-intro centered"><h2>From leftovers to better decisions.</h2><p>Start learning from your waste in a single shift.</p></div>
+          <div className="section-intro centered"><h2>From menu setup to daily close.</h2><p>Most cafés are live within one shift.</p></div>
           <div className="steps">
-            <article><span>1</span><div className="step-icon"><Icon name="plus" size={30} /></div><h3>Log what’s left</h3><p>Choose a product, quantity, and reason. Your team is done in seconds.</p></article>
-            <article><span>2</span><div className="step-icon"><Icon name="chart" size={30} /></div><h3>See the true cost</h3><p>Anteiku turns daily waste into clear weekly and monthly profit leakage.</p></article>
-            <article><span>3</span><div className="step-icon"><Icon name="spark" size={30} /></div><h3>Act on smart insights</h3><p>Know what to make less of, on which days, and how much you could save.</p></article>
+            <article><span>1</span><div className="step-icon"><Icon name="plus" size={30} /></div><h3>Set up your menu</h3><p>Add products and unit costs from our café catalog or your own list.</p></article>
+            <article><span>2</span><div className="step-icon"><Icon name="chart" size={30} /></div><h3>Count stock daily</h3><p>Opening and closing quantities reconciled with waste and implied sales.</p></article>
+            <article><span>3</span><div className="step-icon"><Icon name="spark" size={30} /></div><h3>Act on insights</h3><p>Weekly recommendations, reports, and supplier invoice matching.</p></article>
           </div>
         </section>
 
         <section className="section pricing-section" id="pricing">
           <div className="pricing-copy">
             <div className="section-label">SIMPLE PRICING</div>
-            <h2>Less than the cost of one wasted croissant a day.</h2>
-            <p>Everything an independent café needs to find and fix profit leaks. No setup fee. Cancel any time.</p>
+            <h2>Less than the cost of one miscounted day.</h2>
+            <p>Daily inventory, waste, imports, carbon tracking, and insights for independent cafés. No setup fee.</p>
             <ul>
-              <li><Icon name="check" />Unlimited waste logging</li>
-              <li><Icon name="check" />Weekly smart recommendations</li>
-              <li><Icon name="check" />Reports and CSV exports</li>
-              <li><Icon name="check" />Up to 3 team members</li>
+              <li><Icon name="check" />Daily opening &amp; closing stock</li>
+              <li><Icon name="check" />Waste log &amp; reconciliation</li>
+              <li><Icon name="check" />Supplier invoice import</li>
+              <li><Icon name="check" />Insights, reports &amp; EU carbon tools</li>
             </ul>
           </div>
           <article className="price-card">
@@ -354,7 +355,7 @@ export default function Home() {
           <div><div className="section-label">COMMON QUESTIONS</div><h2>A few things you might be wondering.</h2></div>
           <div className="faq-list">
             {[
-              ["Do I need to track my full inventory?", "No. Anteiku is designed around quick daily waste logging, without the setup burden of a full inventory system."],
+              ["Do I need a full inventory system?", "No. Anteiku focuses on daily opening/closing counts on your menu items — accountant-style, not warehouse-scale stock control."],
               ["How long does it take to get started?", "Add your core products and costs in a few minutes. You can record your first waste log the same day."],
               ["Can my team log waste too?", "Yes. The starter plan includes three team members, each with a simple, mobile-friendly logging flow."],
               [

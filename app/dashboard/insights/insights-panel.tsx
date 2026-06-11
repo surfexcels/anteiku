@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { EmptyStateVisual } from "../dashboard-icons";
 import { formatMoney } from "@/src/lib/format-money";
 import type {
   Recommendation,
@@ -206,9 +207,7 @@ export function InsightsPanel({
             ))}
             {filtered.length === 0 && (
               <div className="empty-state-app">
-                <span className="empty-state-icon" aria-hidden>
-                  💡
-                </span>
+                <EmptyStateVisual icon="insights" />
                 <strong>
                   {recommendations.length === 0
                     ? "No insights yet"

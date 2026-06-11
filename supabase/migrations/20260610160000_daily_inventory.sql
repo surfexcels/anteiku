@@ -56,10 +56,6 @@ create trigger inventory_days_protect_audit_fields
   before update on public.inventory_days
   for each row execute function public.protect_tenant_audit_fields();
 
-create trigger inventory_day_lines_protect_audit_fields
-  before update on public.inventory_day_lines
-  for each row execute function public.protect_tenant_audit_fields();
-
 alter table public.inventory_days enable row level security;
 alter table public.inventory_day_lines enable row level security;
 

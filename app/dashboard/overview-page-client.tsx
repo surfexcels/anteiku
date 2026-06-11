@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { EmptyStateVisual } from "./dashboard-icons";
 import { formatMoney } from "@/src/lib/format-money";
 import {
   overviewBootstrapUrl,
@@ -23,6 +24,7 @@ import type {
 import { BudgetPacingPanel } from "./budget-pacing";
 import { CarbonImpactPanel } from "./carbon-impact-panel";
 import { OverviewAlerts } from "./overview-alerts";
+import { OverviewQuickActions } from "./overview-quick-actions";
 import { PageSkeleton } from "./page-skeleton";
 import { PriceMoversPanel } from "./price-movers-panel";
 import { ReasonBreakdown } from "./reason-breakdown";
@@ -79,16 +81,17 @@ export function OverviewPageClient() {
 
   const weekChange = data.comparison.changePercent;
   const periodLabel = data.periodDays === 30 ? "30 days" : "7 days";
+  const carbonKg = (data.carbon.summary.totalCo2eG / 1000).toFixed(1);
 
   return (
     <main className="dashboard-overview">
       <header className="app-page-header">
         <div>
-          <span className="app-kicker">Command center</span>
-          <h1>{timeGreeting()}.</h1>
+          <span className="app-kicker">Operations overview</span>
+          <h1>{timeGreeting()}, {data.businessName}.</h1>
           <p>
-            Real-time margin leakage at {data.businessName} — waste, costs, and
-            what to fix next.
+            Stock counts, supplier costs, waste, carbon, and margin signals —
+            one dashboard for running the café, not just logging spoilage.
           </p>
         </div>
         <div className="overview-header-actions">
@@ -108,59 +111,20 @@ export function OverviewPageClient() {
               30 days
             </button>
           </div>
-          <Link className="button primary small" href="/dashboard/waste" prefetch>
-            Quick close
-          </Link>
         </div>
       </header>
 
+      <OverviewQuickActions />
+
       <OverviewAlerts alerts={data.alerts} />
 
-      <section className="overview-hero">
-        <div className="overview-hero-main">
-          <span className="overview-hero-label">Waste cost · {periodLabel}</span>
-          <strong>{formatMoney(data.summary.totalCostMinor, data.currencyCode)}</strong>
-          <p>
-            {data.summary.itemCount} entries logged
-            {weekChange !== null && (
-              <>
-                {" "}
-                ·{" "}
-                <span className={weekChange <= 0 ? "metric-good" : "metric-bad"}>
-                  {weekChange > 0 ? "+" : ""}
-                  {weekChange}% vs prior period
-                </span>
-              </>
-            )}
-          </p>
-        </div>
-        <div className="overview-hero-actions">
-          <Link className="button primary small" href="/dashboard/waste" prefetch>
-            Log waste
-          </Link>
-          <Link className="button ghost small" href="/dashboard/products" prefetch>
-            Manage menu
-          </Link>
-        </div>
-      </section>
-
-      <section className="metric-grid-app metric-grid-overview">
-        <article className="metric-card-app">
-          <span>Daily average</span>
-          <strong>{formatMoney(data.dailyAverageMinor, data.currencyCode)}</strong>
-          <p>Run rate across {periodLabel}</p>
-        </article>
-        <article className="metric-card-app">
-          <span>Avg per entry</span>
-          <strong>{formatMoney(data.avgPerEntryMinor, data.currencyCode)}</strong>
-          <p>Cost per waste log</p>
-        </article>
+      <section className="overview-hub-stats">
         <article className="metric-card-app">
           <span>Menu items</span>
           <strong>{data.productCount}</strong>
           <p>
             <Link href="/dashboard/products" prefetch>
-              Manage products
+              Manage menu & costs
             </Link>
           </p>
         </article>
@@ -169,13 +133,50 @@ export function OverviewPageClient() {
           <strong>{data.newInsights}</strong>
           <p>
             <Link href="/dashboard/insights" prefetch>
-              View insights
+              Review opportunities
+            </Link>
+          </p>
+        </article>
+        <article className="metric-card-app">
+          <span>Waste · {periodLabel}</span>
+          <strong>{formatMoney(data.summary.totalCostMinor, data.currencyCode)}</strong>
+          <p>
+            {data.summary.itemCount} entries
+            {weekChange !== null && (
+              <>
+                {" "}
+                ·{" "}
+                <span className={weekChange <= 0 ? "metric-good-text" : "metric-bad-text"}>
+                  {weekChange > 0 ? "+" : ""}
+                  {weekChange}%
+                </span>
+              </>
+            )}
+          </p>
+        </article>
+        <article className="metric-card-app">
+          <span>Carbon · {periodLabel}</span>
+          <strong>{carbonKg} kg</strong>
+          <p>
+            <Link href="/dashboard/sustainability" prefetch>
+              CO₂e from waste
             </Link>
           </p>
         </article>
       </section>
 
+      <div className="overview-section-head">
+        <h2>Margin & pacing</h2>
+        <p>Budget run-rate and recoverable savings from waste patterns.</p>
+      </div>
+
       <BudgetPacingPanel currencyCode={data.currencyCode} pacing={data.budgetPacing} />
+      <SavingsScorecard currencyCode={data.currencyCode} savings={data.savings} />
+
+      <div className="overview-section-head">
+        <h2>Waste & carbon</h2>
+        <p>Cost and environmental impact — tied to daily stock reconciliation.</p>
+      </div>
 
       <CarbonImpactPanel
         carbon={data.carbon}
@@ -189,7 +190,6 @@ export function OverviewPageClient() {
         periodTotalMinor={data.summary.totalCostMinor}
         trend={data.trend}
       />
-      <SavingsScorecard currencyCode={data.currencyCode} savings={data.savings} />
 
       <div className="dashboard-split">
         <ReasonBreakdown
@@ -199,17 +199,17 @@ export function OverviewPageClient() {
         <section className="panel-app">
           <div className="panel-head-app">
             <div>
-              <h2>Where your money went</h2>
-              <p>Top wasted products — {periodLabel}</p>
+              <h2>Top wasted products</h2>
+              <p>Highest cost drivers — {periodLabel}</p>
             </div>
           </div>
           {data.summary.topProducts.length === 0 ? (
             <div className="empty-state-app">
-              <span className="empty-state-icon" aria-hidden>📋</span>
+              <EmptyStateVisual icon="clipboard" />
               <strong>No waste logged yet</strong>
-              <p>Add products to your menu, then log today&apos;s waste.</p>
-              <Link className="button primary small" href="/dashboard/waste" prefetch>
-                Log first entry
+              <p>Set up your menu, then log waste during daily stock or in the waste log.</p>
+              <Link className="button primary small" href="/dashboard/inventory" prefetch>
+                Start daily stock
               </Link>
             </div>
           ) : (
@@ -242,6 +242,11 @@ export function OverviewPageClient() {
             </div>
           )}
         </section>
+      </div>
+
+      <div className="overview-section-head">
+        <h2>Supplier costs</h2>
+        <p>Recent price movement from invoice imports.</p>
       </div>
 
       <PriceMoversPanel currencyCode={data.currencyCode} movers={data.priceMovers} />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import {
@@ -9,6 +9,7 @@ import {
   overviewCacheKey,
   sustainabilityCacheKey,
 } from "@/src/lib/client/dashboard-cache-keys";
+import { invalidateWorkspaceCaches } from "@/src/lib/client/invalidate-dashboard-caches";
 import {
   cachedFetch,
   hydrateCachedData,
@@ -16,6 +17,7 @@ import {
 import { prefetchDashboardBootstrap } from "@/src/lib/client/use-dashboard-bootstrap";
 import { AnteikuLogo } from "@/app/components/anteiku-logo";
 import { DashboardNav } from "./dashboard-nav";
+import { WorkspaceLocationSwitcher } from "./workspace-location-switcher";
 
 interface BusinessContext {
   business: {
@@ -25,6 +27,14 @@ interface BusinessContext {
     currencyCode: string;
     role: string;
   };
+  location: {
+    id: string;
+    name: string;
+  };
+  locations: Array<{
+    id: string;
+    name: string;
+  }>;
 }
 
 const PRIORITY_WARM_ROUTES: Array<{ cacheKey: string; url: string }> = [
@@ -49,20 +59,26 @@ export function DashboardShell({
   signOutAction: () => Promise<void>;
 }) {
   const router = useRouter();
-  const [business, setBusiness] = useState<BusinessContext["business"] | null>(
-    () => hydrateCachedData<BusinessContext>(DASHBOARD_CACHE.business)?.business ?? null,
-  );
+  const pathname = usePathname();
+  const isFloorMode = pathname.startsWith("/dashboard/floor");
+  const [workspace, setWorkspace] = useState<BusinessContext | null>(() => {
+    const cached = hydrateCachedData<BusinessContext>(DASHBOARD_CACHE.business);
+    if (!cached?.business || !cached.location || !cached.locations) {
+      return null;
+    }
+    return cached;
+  });
 
   useEffect(() => {
     let cancelled = false;
 
     for (const route of PRIORITY_WARM_ROUTES) {
-      prefetchDashboardBootstrap(route.url, route.cacheKey);
+      void prefetchDashboardBootstrap(route.url, route.cacheKey);
     }
 
     const defer = () => {
       for (const route of DEFERRED_WARM_ROUTES) {
-        prefetchDashboardBootstrap(route.url, route.cacheKey);
+        void prefetchDashboardBootstrap(route.url, route.cacheKey);
       }
     };
 
@@ -86,7 +102,7 @@ export function DashboardShell({
       5 * 60_000,
     )
       .then((payload) => {
-        if (!cancelled) setBusiness(payload.business);
+        if (!cancelled) setWorkspace(payload);
       })
       .catch(() => undefined);
 
@@ -95,17 +111,43 @@ export function DashboardShell({
     };
   }, [router]);
 
+  if (isFloorMode) {
+    return <div className="floor-shell">{children}</div>;
+  }
+
   return (
     <div className="app-shell">
       <aside className="app-sidebar">
         <AnteikuLogo href="/dashboard" size="sm" variant="sidebar" />
         <DashboardNav />
         <div className="app-sidebar-foot">
+          {workspace?.locations && workspace.locations.length > 1 ? (
+            <WorkspaceLocationSwitcher
+              activeLocationId={
+                workspace.location?.id ?? workspace.locations[0]?.id ?? ""
+              }
+              locations={workspace.locations}
+              onChanged={async () => {
+                invalidateWorkspaceCaches();
+                const response = await fetch(DASHBOARD_BOOTSTRAP_URL.business);
+                if (response.ok) {
+                  setWorkspace(await response.json());
+                }
+                router.refresh();
+              }}
+            />
+          ) : null}
           <div className="app-business">
-            <span>{business ? business.name.slice(0, 2).toUpperCase() : "…"}</span>
+            <span>
+              {workspace ? workspace.business.name.slice(0, 2).toUpperCase() : "…"}
+            </span>
             <div>
-              <strong>{business?.name ?? "Loading"}</strong>
-              <small>{business?.role ?? ""}</small>
+              <strong>{workspace?.business.name ?? "Loading"}</strong>
+              <small>
+                {workspace?.location.name
+                  ? `${workspace.location.name} · ${workspace.business.role}`
+                  : workspace?.business.role ?? ""}
+              </small>
             </div>
           </div>
           <form action={signOutAction}>
@@ -115,7 +157,25 @@ export function DashboardShell({
           </form>
         </div>
       </aside>
-      <div className="app-content">{children}</div>
+      <div
+        className="app-content"
+        onMouseDown={(event) => {
+          const target = event.target as HTMLElement;
+          if (
+            target.closest(
+              "input, textarea, select, [contenteditable='true'], .is-selectable, .calculation-explainer-body, .waste-log-table",
+            )
+          ) {
+            return;
+          }
+          const selection = window.getSelection();
+          if (selection && selection.rangeCount > 0) {
+            selection.removeAllRanges();
+          }
+        }}
+      >
+        {children}
+      </div>
     </div>
   );
 }

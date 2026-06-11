@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getBusinessContext } from "@/src/lib/auth/get-business-context";
+import { localDateKey } from "@/src/lib/date/local-date-key";
 import { SupabaseCatalogRepository } from "@/src/modules/catalog/infrastructure/supabase-catalog-repository";
+import { SupabaseInventoryRepository } from "@/src/modules/inventory/infrastructure/supabase-inventory-repository";
 import { SupabaseWasteRepository } from "@/src/modules/waste/infrastructure/supabase-waste-repository";
 
 export async function GET() {
@@ -10,18 +12,44 @@ export async function GET() {
   try {
     const wasteRepository = new SupabaseWasteRepository(context.supabase);
     const catalogRepository = new SupabaseCatalogRepository(context.supabase);
+    const inventoryRepository = new SupabaseInventoryRepository(context.supabase);
+    const today = localDateKey(new Date());
 
-    const [logs, products, reasons] = await Promise.all([
-      wasteRepository.listLogs(context.business.id),
+    const [
+      logs,
+      products,
+      reasons,
+      summary,
+      trend,
+      reasonBreakdown,
+      comparison,
+      inventoryDay,
+    ] = await Promise.all([
+      wasteRepository.listLogs(context.business.id, 100),
       catalogRepository.listBusinessProducts(context.business.id),
       wasteRepository.listReasons(context.business.id),
+      wasteRepository.getSummary(context.business.id, 7),
+      wasteRepository.getDailyTrend(context.business.id, 7),
+      wasteRepository.getReasonBreakdown(context.business.id, 7),
+      wasteRepository.getPeriodComparison(context.business.id, 7),
+      inventoryRepository.getDayByDate(
+        context.business.id,
+        context.location.id,
+        today,
+      ),
     ]);
 
     return NextResponse.json({
       currencyCode: context.business.currencyCode,
+      stockDate: today,
       logs,
       products: products.filter((product) => product.isActive),
       reasons,
+      summary,
+      trend,
+      reasonBreakdown,
+      comparison,
+      inventoryDayStatus: inventoryDay?.status ?? null,
     });
   } catch {
     return NextResponse.json({ error: "Could not load waste page" }, { status: 500 });

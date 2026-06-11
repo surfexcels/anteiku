@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { localDateKey } from "@/src/lib/date/local-date-key";
+import { normalizeQuantity } from "@/src/lib/inventory/quantity-step";
+import type { ProductUnit } from "@/src/modules/catalog/domain/catalog-product";
 import type { InventoryRepository } from "@/src/modules/inventory/application/inventory-repository";
 import {
   reconcileInventoryLine,
@@ -213,7 +215,7 @@ export class SupabaseInventoryRepository implements InventoryRepository {
       .eq("business_id", input.businessId)
       .eq("id", input.dayId);
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
 
     await this.upsertLines(input.businessId, input.dayId, input.lines);
 
@@ -246,7 +248,7 @@ export class SupabaseInventoryRepository implements InventoryRepository {
       .eq("business_id", input.businessId)
       .eq("id", input.dayId);
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
 
     await this.upsertLines(input.businessId, input.dayId, input.lines, true);
 
@@ -272,11 +274,21 @@ export class SupabaseInventoryRepository implements InventoryRepository {
       prior.lines.map((line) => [line.businessProductId, line.closingQuantity ?? 0]),
     );
 
-    return lines.map((line) => ({
-      ...line,
-      openingQuantity:
-        closingByProduct.get(line.businessProductId) ?? line.openingQuantity,
-    }));
+    const unitByProduct = new Map(
+      prior.lines.map((line) => [line.businessProductId, line.unit as ProductUnit]),
+    );
+
+    return lines.map((line) => {
+      const unit = unitByProduct.get(line.businessProductId) ?? "item";
+      const carried = closingByProduct.get(line.businessProductId);
+      return {
+        ...line,
+        openingQuantity:
+          carried !== undefined
+            ? normalizeQuantity(carried, unit)
+            : line.openingQuantity,
+      };
+    });
   }
 
   private async upsertLines(
@@ -297,11 +309,22 @@ export class SupabaseInventoryRepository implements InventoryRepository {
       note: line.note ?? null,
     }));
 
-    const { error } = await this.supabase
+    // Replace lines instead of upsert: a legacy DB trigger on UPDATE references
+    // created_by, which this table does not have (see migration 20260610170000).
+    const { error: deleteError } = await this.supabase
       .from("inventory_day_lines")
-      .upsert(payload, { onConflict: "inventory_day_id,business_product_id" });
+      .delete()
+      .eq("business_id", businessId)
+      .eq("inventory_day_id", dayId);
 
-    if (error) throw error;
+    if (deleteError) throw new Error(deleteError.message);
+    if (payload.length === 0) return;
+
+    const { error: insertError } = await this.supabase
+      .from("inventory_day_lines")
+      .insert(payload);
+
+    if (insertError) throw new Error(insertError.message);
   }
 
   private async buildDayDetail(

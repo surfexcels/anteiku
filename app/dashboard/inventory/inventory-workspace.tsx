@@ -5,11 +5,24 @@ import { useEffect, useMemo, useState } from "react";
 import { formatMoney } from "@/src/lib/format-money";
 import { localDateKey } from "@/src/lib/date/local-date-key";
 import { invalidateInventoryCaches } from "@/src/lib/client/invalidate-dashboard-caches";
+import { normalizeQuantity } from "@/src/lib/inventory/quantity-step";
 import type { BusinessProduct } from "@/src/modules/catalog/domain/catalog-product";
 import type {
   InventoryDayDetail,
   InventoryDaySummary,
 } from "@/src/modules/inventory/domain/inventory";
+import type { WasteLog, WasteReason } from "@/src/modules/waste/domain/waste";
+import {
+  DailyStockTabs,
+  type DailyStockTab,
+} from "../daily-stock/daily-stock-tabs";
+import { DailyWasteSection } from "../daily-stock/daily-waste-section";
+import {
+  StockHandoffBanner,
+  StockHandoffNextDay,
+} from "../daily-stock/stock-handoff-banner";
+import { EmptyStateVisual, StatusDot } from "../dashboard-icons";
+import { InventoryQuantityStepper } from "./inventory-quantity-stepper";
 
 type Quantities = Record<string, { opening: number; closing: number }>;
 
@@ -23,32 +36,46 @@ function buildQuantities(
       (item) => item.businessProductId === product.id,
     );
     map[product.id] = {
-      opening: line?.openingQuantity ?? 0,
-      closing: line?.closingQuantity ?? 0,
+      opening: normalizeQuantity(line?.openingQuantity ?? 0, product.unit),
+      closing: normalizeQuantity(line?.closingQuantity ?? 0, product.unit),
     };
   }
   return map;
 }
 
 export function InventoryWorkspace({
-  stockDate,
-  currencyCode,
-  products,
-  day,
-  recentDays,
+  activeTab,
   canCarryForward,
-  todayOpen,
+  currencyCode,
+  day,
+  nextStockDate,
   onDateChange,
   onRefresh,
+  onTabChange,
+  onStartNextDay,
+  priorDay,
+  products,
+  recentDays,
+  stockDate,
+  todayOpen,
+  wasteLogs,
+  wasteReasons,
 }: {
+  activeTab: DailyStockTab;
   stockDate: string;
+  nextStockDate: string;
   currencyCode: string;
   products: BusinessProduct[];
   day: InventoryDayDetail | null;
+  priorDay: InventoryDayDetail | null;
   recentDays: InventoryDaySummary[];
   canCarryForward: boolean;
   todayOpen: boolean;
+  wasteLogs: WasteLog[];
+  wasteReasons: WasteReason[];
   onDateChange: (date: string) => void;
+  onTabChange: (tab: DailyStockTab) => void;
+  onStartNextDay: () => void;
   onRefresh: () => Promise<void>;
 }) {
   const [quantities, setQuantities] = useState<Quantities>(() =>
@@ -66,7 +93,7 @@ export function InventoryWorkspace({
 
   const isClosed = day?.status === "closed";
   const isToday = stockDate === localDateKey(new Date());
-
+  const dayStatus = day?.status ?? null;
   const reconciliation = useMemo(() => day?.lines ?? [], [day]);
 
   function setQuantity(
@@ -74,12 +101,13 @@ export function InventoryWorkspace({
     field: "opening" | "closing",
     value: number,
   ) {
+    const unit = products.find((p) => p.id === productId)?.unit ?? "item";
     setQuantities((current) => ({
       ...current,
       [productId]: {
         opening: current[productId]?.opening ?? 0,
         closing: current[productId]?.closing ?? 0,
-        [field]: Math.max(0, value),
+        [field]: normalizeQuantity(value, unit),
       },
     }));
   }
@@ -127,7 +155,8 @@ export function InventoryWorkspace({
     await onRefresh();
     setSaving(false);
     setMessageTone("success");
-    setMessage("Opening stock saved. Log waste during the day, then enter closing counts.");
+    setMessage("Opening stock saved. Log waste, then enter closing counts.");
+    onTabChange("waste");
   }
 
   async function saveOpening() {
@@ -190,7 +219,8 @@ export function InventoryWorkspace({
     await onRefresh();
     setSaving(false);
     setMessageTone("success");
-    setMessage("Day closed. Export your reconciliation below.");
+    setMessage("Day closed. Review the summary or start tomorrow.");
+    onTabChange("summary");
   }
 
   return (
@@ -213,253 +243,389 @@ export function InventoryWorkspace({
               type="button"
             >
               {item.stockDate.slice(5)}
-              <em>{item.status === "closed" ? "✓" : "…"}</em>
+              <StatusDot closed={item.status === "closed"} />
             </button>
           ))}
         </div>
       </div>
 
-      {!day && (
-        <section className="panel-app">
-          <div className="panel-head-app">
-            <div>
-              <h2>Start opening stock</h2>
-              <p>
-                Enter what you have on hand at the start of {stockDate}. You can
-                carry forward yesterday&apos;s closing counts.
-              </p>
-            </div>
-          </div>
+      <DailyStockTabs
+        activeTab={activeTab}
+        dayStatus={dayStatus}
+        onTabChange={onTabChange}
+        stockDate={stockDate}
+      />
 
-          {products.length === 0 ? (
-            <div className="empty-state-app">
-              <span className="empty-state-icon" aria-hidden>📦</span>
-              <strong>Add products to your menu first</strong>
-              <p>Inventory lines are built from your active menu items.</p>
-              <Link className="button primary small" href="/dashboard/products" prefetch>
-                Set up menu
-              </Link>
-            </div>
-          ) : (
-            <>
-              {canCarryForward && (
-                <label className="checkbox-field inventory-carry-forward">
-                  <input
-                    checked={carryForward}
-                    onChange={(event) => setCarryForward(event.target.checked)}
-                    type="checkbox"
-                  />
-                  Use yesterday&apos;s closing counts as today&apos;s opening stock
-                </label>
-              )}
-              <InventoryQuantityGrid
-                currencyCode={currencyCode}
-                disabled={saving}
-                field="opening"
-                products={products}
-                quantities={quantities}
-                setQuantity={setQuantity}
-              />
-              <button
-                className="button primary full"
-                disabled={saving}
-                onClick={openDay}
-                type="button"
-              >
-                {saving ? "Saving…" : "Save opening stock"}
-              </button>
-            </>
-          )}
-        </section>
-      )}
+      {activeTab === "opening" && (
+        <div className="daily-stock-tab-panel active">
+          <StockHandoffBanner priorDay={priorDay} stockDate={stockDate} />
 
-      {day && (
-        <>
-          <section className="inventory-formula-banner">
-            <strong>Reconciliation formula</strong>
-            <p>
-              <span>Usage (sold / consumed)</span> = Opening − Closing − Waste
-              <br />
-              Waste is pulled automatically from your{" "}
-              <Link href="/dashboard/waste" prefetch>waste log</Link> for this date.
-            </p>
-          </section>
-
-          {!isClosed && (
+          {!day ? (
             <section className="panel-app">
               <div className="panel-head-app">
                 <div>
                   <h2>Opening stock</h2>
-                  <p>Adjust if counts changed after you opened the day.</p>
+                  <p>
+                    Count what you have at the start of {stockDate}. Use
+                    yesterday&apos;s closing counts when carry forward is on.
+                  </p>
+                </div>
+              </div>
+
+              {products.length === 0 ? (
+                <div className="empty-state-app">
+                  <EmptyStateVisual icon="inventory" />
+                  <strong>Add products to your menu first</strong>
+                  <p>Inventory lines are built from your active menu items.</p>
+                  <Link className="button primary small" href="/dashboard/products" prefetch>
+                    Set up menu
+                  </Link>
+                </div>
+              ) : (
+                <>
+                  {canCarryForward && (
+                    <label className="checkbox-field inventory-carry-forward">
+                      <input
+                        checked={carryForward}
+                        onChange={(event) => setCarryForward(event.target.checked)}
+                        type="checkbox"
+                      />
+                      Use yesterday&apos;s closing counts as today&apos;s opening stock
+                    </label>
+                  )}
+                  <InventoryQuantityGrid
+                    currencyCode={currencyCode}
+                    disabled={saving}
+                    field="opening"
+                    products={products}
+                    quantities={quantities}
+                    setQuantity={setQuantity}
+                  />
+                  <button
+                    className="button primary full"
+                    disabled={saving}
+                    onClick={openDay}
+                    type="button"
+                  >
+                    {saving ? "Saving…" : "Save opening stock"}
+                  </button>
+                </>
+              )}
+            </section>
+          ) : (
+            <section className="panel-app">
+              <div className="panel-head-app">
+                <div>
+                  <h2>Opening stock</h2>
+                  <p>
+                    {isClosed
+                      ? "This day is closed — opening counts are locked."
+                      : "Adjust if counts changed after you opened the day."}
+                  </p>
                 </div>
                 <span className={`status-pill ${day.status}`}>{day.status}</span>
               </div>
-              <InventoryQuantityGrid
-                currencyCode={currencyCode}
-                disabled={saving}
-                field="opening"
-                products={products}
-                quantities={quantities}
-                setQuantity={setQuantity}
-              />
-              <button
-                className="button ghost full"
-                disabled={saving}
-                onClick={saveOpening}
-                type="button"
-              >
-                {saving ? "Saving…" : "Update opening stock"}
-              </button>
+              {!isClosed ? (
+                <>
+                  <InventoryQuantityGrid
+                    currencyCode={currencyCode}
+                    disabled={saving}
+                    field="opening"
+                    products={products}
+                    quantities={quantities}
+                    setQuantity={setQuantity}
+                  />
+                  <button
+                    className="button ghost full"
+                    disabled={saving}
+                    onClick={saveOpening}
+                    type="button"
+                  >
+                    {saving ? "Saving…" : "Update opening stock"}
+                  </button>
+                </>
+              ) : (
+                <InventoryQuantityGrid
+                  currencyCode={currencyCode}
+                  disabled
+                  field="opening"
+                  products={products}
+                  quantities={quantities}
+                  setQuantity={setQuantity}
+                />
+              )}
             </section>
           )}
+        </div>
+      )}
 
-          <section className="panel-app inventory-reconciliation-panel">
-            <div className="panel-head-app">
-              <div>
-                <h2>Day reconciliation</h2>
-                <p>
-                  {isClosed
-                    ? "Closed day — opening, waste, closing, and implied usage."
-                    : "Enter closing counts below to complete the day."}
-                </p>
-              </div>
-              {day && (
-                <div className="inventory-export-actions">
-                  <a
-                    className="button ghost small"
-                    href={`/api/inventory/days/${day.id}/export?format=csv`}
-                  >
-                    Export CSV
-                  </a>
-                  <a
-                    className="button ghost small"
-                    href={`/api/inventory/days/${day.id}/export?format=xls`}
-                  >
-                    Export Excel
-                  </a>
-                </div>
-              )}
+      {activeTab === "waste" && (
+        <div className="daily-stock-tab-panel active">
+          {!day && (
+            <div className="daily-stock-tab-notice">
+              <p>
+                Save opening stock first so waste reconciles with your counts.{" "}
+                <button
+                  className="link-button"
+                  onClick={() => onTabChange("opening")}
+                  type="button"
+                >
+                  Go to opening
+                </button>
+              </p>
             </div>
+          )}
+          <DailyWasteSection
+            currencyCode={currencyCode}
+            dayStatus={dayStatus}
+            initialLogs={wasteLogs}
+            onGoToClosing={() => onTabChange("closing")}
+            onRefresh={onRefresh}
+            products={products}
+            reasons={wasteReasons}
+            stockDate={stockDate}
+          />
+        </div>
+      )}
 
-            {day.totals && (
-              <div className="inventory-totals-strip">
-                <div>
-                  <span>Opening</span>
-                  <strong>{formatMoney(day.totals.openingCostMinor, currencyCode)}</strong>
-                </div>
-                <div>
-                  <span>Waste</span>
-                  <strong>{formatMoney(day.totals.wasteCostMinor, currencyCode)}</strong>
-                </div>
-                <div>
-                  <span>Usage</span>
-                  <strong>{formatMoney(day.totals.usageCostMinor, currencyCode)}</strong>
-                </div>
-                <div>
-                  <span>Closing</span>
-                  <strong>{formatMoney(day.totals.closingCostMinor, currencyCode)}</strong>
-                </div>
-                {day.totals.varianceCostMinor > 0 && (
-                  <div className="inventory-variance">
-                    <span>Variance</span>
-                    <strong>{formatMoney(day.totals.varianceCostMinor, currencyCode)}</strong>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="waste-log-table-wrap">
-              <table className="waste-log-table inventory-table">
-                <thead>
-                  <tr>
-                    <th>Product</th>
-                    <th>Opening</th>
-                    <th>Waste</th>
-                    <th>Closing</th>
-                    <th>Usage</th>
-                    <th>Value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {reconciliation.map((line) => (
-                    <tr key={line.id}>
-                      <td>
-                        <div className="waste-log-product">
-                          <strong>{line.productName}</strong>
-                          <small>{line.unit}</small>
-                        </div>
-                      </td>
-                      <td>{line.openingQuantity}</td>
-                      <td>
-                        {line.wasteQuantity}
-                        <small className="inventory-subvalue">
-                          {formatMoney(line.wasteCostMinor, currencyCode)}
-                        </small>
-                      </td>
-                      <td>
-                        {!isClosed ? (
-                          <input
-                            className="inventory-qty-input"
-                            disabled={saving}
-                            min="0"
-                            onChange={(event) =>
-                              setQuantity(
-                                line.businessProductId,
-                                "closing",
-                                Number(event.target.value) || 0,
-                              )
-                            }
-                            step="0.001"
-                            type="number"
-                            value={quantities[line.businessProductId]?.closing ?? 0}
-                          />
-                        ) : (
-                          line.closingQuantity
-                        )}
-                      </td>
-                      <td>
-                        {line.usageQuantity ?? "—"}
-                        {line.varianceQuantity ? (
-                          <small className="inventory-variance-tag">
-                            +{line.varianceQuantity} unaccounted
-                          </small>
-                        ) : null}
-                      </td>
-                      <td>
-                        <span className="waste-log-amount">
-                          {line.usageCostMinor === null
-                            ? "—"
-                            : formatMoney(line.usageCostMinor, currencyCode)}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {!isClosed && (
+      {activeTab === "closing" && (
+        <div className="daily-stock-tab-panel active">
+          {!day ? (
+            <div className="empty-state-app">
+              <strong>Start with opening stock</strong>
+              <p>Enter opening counts before you can close the day.</p>
               <button
-                className="button primary full inventory-close-btn"
-                disabled={saving}
-                onClick={closeDay}
+                className="button primary small"
+                onClick={() => onTabChange("opening")}
                 type="button"
               >
-                {saving ? "Closing…" : "Close day with closing stock"}
+                Opening stock
               </button>
-            )}
-          </section>
-
-          {isToday && todayOpen && !isClosed && (
-            <p className="inventory-hint">
-              Remember to log waste in{" "}
-              <Link href="/dashboard/waste" prefetch>
-                Waste log
-              </Link>{" "}
-              before closing — those quantities feed this reconciliation.
-            </p>
+            </div>
+          ) : isClosed ? (
+            <div className="daily-stock-tab-notice">
+              <p>
+                This day is already closed.{" "}
+                <button
+                  className="link-button"
+                  onClick={() => onTabChange("summary")}
+                  type="button"
+                >
+                  View summary
+                </button>
+              </p>
+            </div>
+          ) : (
+            <>
+              <section className="inventory-formula-banner">
+                <strong>Before you close</strong>
+                <p>
+                  Log any remaining waste in the{" "}
+                  <button
+                    className="link-button"
+                    onClick={() => onTabChange("waste")}
+                    type="button"
+                  >
+                    Waste tab
+                  </button>
+                  . Then count what&apos;s left on the shelf.
+                </p>
+              </section>
+              <section className="panel-app">
+                <div className="panel-head-app">
+                  <div>
+                    <h2>Closing stock</h2>
+                    <p>
+                      What&apos;s on hand at end of day. These counts can carry
+                      forward as tomorrow&apos;s opening.
+                    </p>
+                  </div>
+                </div>
+                <InventoryQuantityGrid
+                  currencyCode={currencyCode}
+                  disabled={saving}
+                  field="closing"
+                  products={products}
+                  quantities={quantities}
+                  setQuantity={setQuantity}
+                />
+                <button
+                  className="button primary full inventory-close-btn"
+                  disabled={saving}
+                  onClick={closeDay}
+                  type="button"
+                >
+                  {saving ? "Closing…" : "Close day with these counts"}
+                </button>
+              </section>
+            </>
           )}
-        </>
+        </div>
+      )}
+
+      {activeTab === "summary" && (
+        <div className="daily-stock-tab-panel active">
+          {!day ? (
+            <div className="empty-state-app">
+              <strong>No stock session for this date</strong>
+              <p>Open the day to see reconciliation here after closing.</p>
+              <button
+                className="button primary small"
+                onClick={() => onTabChange("opening")}
+                type="button"
+              >
+                Opening stock
+              </button>
+            </div>
+          ) : (
+            <>
+              <section className="inventory-formula-banner">
+                <strong>Reconciliation</strong>
+                <p>
+                  <span>Usage (sold / consumed)</span> = Opening − Closing − Waste
+                </p>
+              </section>
+
+              <section className="panel-app inventory-reconciliation-panel">
+                <div className="panel-head-app">
+                  <div>
+                    <h2>Day summary</h2>
+                    <p>
+                      {isClosed
+                        ? "Closed day — opening, waste, closing, and implied usage."
+                        : "Live preview — close the day to lock these numbers."}
+                    </p>
+                  </div>
+                  <div className="inventory-export-actions">
+                    <a
+                      className="button ghost small"
+                      href={`/api/inventory/days/${day.id}/export?format=csv`}
+                    >
+                      Export CSV
+                    </a>
+                    <a
+                      className="button ghost small"
+                      href={`/api/inventory/days/${day.id}/export?format=xls`}
+                    >
+                      Export Excel
+                    </a>
+                  </div>
+                </div>
+
+                {day.totals && (
+                  <div className="inventory-totals-strip">
+                    <div>
+                      <span>Opening</span>
+                      <strong>{formatMoney(day.totals.openingCostMinor, currencyCode)}</strong>
+                    </div>
+                    <div>
+                      <span>Waste</span>
+                      <strong>{formatMoney(day.totals.wasteCostMinor, currencyCode)}</strong>
+                    </div>
+                    <div>
+                      <span>Usage</span>
+                      <strong>{formatMoney(day.totals.usageCostMinor, currencyCode)}</strong>
+                    </div>
+                    <div>
+                      <span>Closing</span>
+                      <strong>{formatMoney(day.totals.closingCostMinor, currencyCode)}</strong>
+                    </div>
+                    {day.totals.varianceCostMinor > 0 && (
+                      <div className="inventory-variance">
+                        <span>Variance</span>
+                        <strong>
+                          {formatMoney(day.totals.varianceCostMinor, currencyCode)}
+                        </strong>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="waste-log-table-wrap">
+                  <table className="waste-log-table inventory-table">
+                    <thead>
+                      <tr>
+                        <th>Product</th>
+                        <th>Opening</th>
+                        <th>Waste</th>
+                        <th>Closing</th>
+                        <th>Usage</th>
+                        <th>Value</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reconciliation.map((line) => (
+                        <tr key={line.id}>
+                          <td>
+                            <div className="waste-log-product">
+                              <strong>{line.productName}</strong>
+                              <small>{line.unit}</small>
+                            </div>
+                          </td>
+                          <td>{line.openingQuantity}</td>
+                          <td>
+                            {line.wasteQuantity}
+                            <small className="inventory-subvalue">
+                              {formatMoney(line.wasteCostMinor, currencyCode)}
+                            </small>
+                          </td>
+                          <td>{line.closingQuantity ?? "—"}</td>
+                          <td>
+                            {line.usageQuantity ?? "—"}
+                            {line.varianceQuantity ? (
+                              <small className="inventory-variance-tag">
+                                +{line.varianceQuantity} unaccounted
+                              </small>
+                            ) : null}
+                          </td>
+                          <td>
+                            <span className="waste-log-amount">
+                              {line.usageCostMinor === null
+                                ? "—"
+                                : formatMoney(line.usageCostMinor, currencyCode)}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {!isClosed && (
+                  <button
+                    className="button primary full inventory-close-btn"
+                    onClick={() => onTabChange("closing")}
+                    type="button"
+                  >
+                    Enter closing stock
+                  </button>
+                )}
+              </section>
+
+              {isClosed && (
+                <StockHandoffNextDay
+                  closedDay={day}
+                  nextStockDate={nextStockDate}
+                  onStartNextDay={onStartNextDay}
+                />
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {isToday && todayOpen && !isClosed && activeTab !== "waste" && (
+        <p className="inventory-hint">
+          Log waste in the{" "}
+          <button
+            className="link-button"
+            onClick={() => onTabChange("waste")}
+            type="button"
+          >
+            Waste tab
+          </button>{" "}
+          as it happens — it feeds closing reconciliation.
+        </p>
       )}
 
       {message && (
@@ -494,15 +660,11 @@ function InventoryQuantityGrid({
               {formatMoney(product.unitCostMinor, currencyCode)} / {product.unit}
             </small>
           </div>
-          <input
-            className="inventory-qty-input"
+          <InventoryQuantityStepper
+            ariaLabel={`${field} ${product.name}`}
             disabled={disabled}
-            min="0"
-            onChange={(event) =>
-              setQuantity(product.id, field, Number(event.target.value) || 0)
-            }
-            step="0.001"
-            type="number"
+            onChange={(value) => setQuantity(product.id, field, value)}
+            unit={product.unit}
             value={quantities[product.id]?.[field] ?? 0}
           />
         </article>

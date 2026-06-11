@@ -44,6 +44,7 @@ export function invalidateProductCaches() {
 
 export function invalidateWasteCaches() {
   invalidateCachedData(DASHBOARD_CACHE.waste);
+  invalidateCachedData(DASHBOARD_CACHE.floor);
   invalidateCachedData(DASHBOARD_CACHE.inventory);
   invalidateCachedData(overviewCacheKey(7));
   invalidateCachedData(overviewCacheKey(30));
@@ -75,4 +76,14 @@ export function invalidateInventoryCaches(stockDate?: string) {
   if (stockDate) {
     invalidateCachedData(`${DASHBOARD_CACHE.inventory}:${stockDate}`);
   }
+}
+
+export function invalidateWorkspaceCaches() {
+  for (const key of Object.values(DASHBOARD_CACHE)) {
+    invalidateCachedData(key);
+  }
+  invalidateCachedData(overviewCacheKey(7));
+  invalidateCachedData(overviewCacheKey(30));
+  invalidateCachedData(sustainabilityCacheKey(7));
+  invalidateCachedData(sustainabilityCacheKey(30));
 }

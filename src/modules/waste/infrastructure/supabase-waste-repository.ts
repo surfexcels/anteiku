@@ -143,6 +143,25 @@ export class SupabaseWasteRepository implements WasteRepository {
     return ((data ?? []) as unknown as WasteLogRow[]).map(mapWasteLog);
   }
 
+  async listLogsForDate(businessId: string, stockDate: string): Promise<WasteLog[]> {
+    const start = new Date(`${stockDate}T00:00:00`);
+    const end = new Date(`${stockDate}T23:59:59.999`);
+
+    const { data, error } = await this.client
+      .from("waste_logs")
+      .select(WASTE_LOG_SELECT)
+      .eq("business_id", businessId)
+      .gte("occurred_at", start.toISOString())
+      .lte("occurred_at", end.toISOString())
+      .order("occurred_at", { ascending: false });
+
+    if (error) throw error;
+
+    return ((data ?? []) as unknown as WasteLogRow[])
+      .filter((row) => localDateKey(new Date(row.occurred_at)) === stockDate)
+      .map(mapWasteLog);
+  }
+
   async createLog(input: CreateWasteLogInput): Promise<WasteLog> {
     const { data: product, error: productError } = await this.client
       .from("business_products")

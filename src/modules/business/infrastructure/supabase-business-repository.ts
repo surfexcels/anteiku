@@ -72,18 +72,57 @@ export class SupabaseBusinessRepository implements BusinessRepository {
   async getPrimaryLocation(
     businessId: string,
   ): Promise<BusinessLocation | null> {
+    const locations = await this.listLocations(businessId);
+    return locations[0] ?? null;
+  }
+
+  async listLocations(businessId: string): Promise<BusinessLocation[]> {
     const { data, error } = await this.client
       .from("locations")
       .select("id, name")
       .eq("business_id", businessId)
       .eq("is_active", true)
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
+      .order("created_at", { ascending: true });
 
     if (error) throw error;
-    if (!data) return null;
 
-    return { id: data.id, name: data.name };
+    return (data ?? []).map((row) => ({ id: row.id, name: row.name }));
+  }
+
+  async getActiveLocationPreference(
+    userId: string,
+    businessId: string,
+  ): Promise<{ locationId: string } | null> {
+    const { data, error } = await this.client
+      .from("member_preferences")
+      .select("active_location_id")
+      .eq("user_id", userId)
+      .eq("business_id", businessId)
+      .maybeSingle();
+
+    if (error) {
+      if (error.code === "42P01") return null;
+      throw error;
+    }
+
+    if (!data) return null;
+    return { locationId: data.active_location_id };
+  }
+
+  async setActiveLocationPreference(
+    userId: string,
+    businessId: string,
+    locationId: string,
+  ): Promise<void> {
+    const { error } = await this.client.from("member_preferences").upsert(
+      {
+        user_id: userId,
+        business_id: businessId,
+        active_location_id: locationId,
+      },
+      { onConflict: "user_id,business_id" },
+    );
+
+    if (error) throw error;
   }
 }

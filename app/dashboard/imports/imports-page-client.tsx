@@ -6,6 +6,7 @@ import {
 } from "@/src/lib/client/dashboard-cache-keys";
 import { useDashboardBootstrap } from "@/src/lib/client/use-dashboard-bootstrap";
 import type { SupplierImport } from "@/src/modules/imports/domain/supplier-import";
+import { PageHeaderStats } from "../page-header-stats";
 import { PageSkeleton } from "../page-skeleton";
 import { ImportsPanel } from "./imports-panel";
 
@@ -50,30 +51,21 @@ export function ImportsPageClient() {
           <span className="app-kicker">Supplier imports</span>
           <h1>Match invoices to your menu.</h1>
           <p>
-            Upload supplier PDFs or spreadsheets — OCR extracts costs and links them to
-            your products.
+            Upload supplier PDFs or spreadsheets — we read line items and link costs to
+            your menu.
           </p>
         </div>
-        <div className="waste-page-stats">
-          <div className="waste-stat-pill">
-            <div>
-              <span>Uploads</span>
-              <strong>{data.imports.length}</strong>
-            </div>
-          </div>
-          <div className="waste-stat-pill">
-            <div>
-              <span>Completed</span>
-              <strong>{completed}</strong>
-            </div>
-          </div>
-          <div className="waste-stat-pill">
-            <div>
-              <span>Lines matched</span>
-              <strong>{matchedLines}</strong>
-            </div>
-          </div>
-        </div>
+        <PageHeaderStats
+          items={[
+            { label: "Uploads", value: data.imports.length },
+            {
+              label: "Completed",
+              value: completed,
+              tone: completed > 0 ? "positive" : "muted",
+            },
+            { label: "Lines matched", value: matchedLines },
+          ]}
+        />
       </header>
       <ImportsPanel initialImports={data.imports} />
     </main>

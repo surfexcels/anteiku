@@ -18,14 +18,14 @@ export default async function LoginPage({
         <AnteikuLogo
           href="/"
           size="lg"
-          tagline="Cafe profit intelligence"
+          tagline="Cafe operations & profit"
           variant="auth"
         />
         <div className="auth-copy">
-          <h1>Turn daily leftovers into better decisions.</h1>
+          <h1>Run your café with clearer numbers.</h1>
           <p>
-            Sign in to build your product menu, log waste, and see where your
-            margin is quietly disappearing.
+            Sign in to manage your menu, daily stock counts, waste, supplier
+            imports, and margin insights — in one workspace.
           </p>
         </div>
         <div className="auth-proof">

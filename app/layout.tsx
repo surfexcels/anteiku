@@ -1,10 +1,21 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Anteiku | Find the leaks in your cafe profit",
+  title: "Anteiku | Cafe operations & profit intelligence",
   description:
-    "Track food waste, uncover hidden costs, and make smarter production decisions.",
+    "Daily inventory, waste tracking, supplier imports, and margin insights for independent cafés.",
+  appleWebApp: {
+    capable: true,
+    title: "Anteiku",
+    statusBarStyle: "black-translucent",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0f1713",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({

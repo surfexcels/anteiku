@@ -21,6 +21,7 @@ function cacheKeyForPath(pathname: string) {
   if (pathname.startsWith("/dashboard/imports")) return DASHBOARD_CACHE.imports;
   if (pathname.startsWith("/dashboard/inventory")) return DASHBOARD_CACHE.inventory;
   if (pathname.startsWith("/dashboard/sustainability")) return sustainabilityCacheKey(7);
+  if (pathname.startsWith("/dashboard/floor")) return DASHBOARD_CACHE.floor;
   return null;
 }
 
@@ -34,8 +35,9 @@ type NavLink = {
 
 const trackLinks: NavLink[] = [
   { href: "/dashboard", label: "Overview", icon: "overview", exact: true },
-  { href: "/dashboard/waste", label: "Waste log", icon: "waste", emphasis: true },
-  { href: "/dashboard/inventory", label: "Inventory", icon: "inventory" },
+  { href: "/dashboard/floor", label: "Floor mode", icon: "floor", emphasis: true },
+  { href: "/dashboard/inventory", label: "Daily stock", icon: "inventory" },
+  { href: "/dashboard/waste", label: "Waste log", icon: "waste" },
   { href: "/dashboard/sustainability", label: "Carbon", icon: "carbon" },
 ];
 
@@ -100,7 +102,7 @@ export function DashboardNav() {
     const bootstrapUrl = bootstrapUrlForPath(href);
     const cacheKey = cacheKeyForPath(href);
     if (bootstrapUrl && cacheKey) {
-      prefetchDashboardBootstrap(bootstrapUrl, cacheKey);
+      void prefetchDashboardBootstrap(bootstrapUrl, cacheKey);
     }
   }
 
@@ -124,7 +126,7 @@ export function DashboardNav() {
 
       <nav className={open ? "app-nav-open" : undefined}>
         <NavSection
-          label="Track waste"
+          label="Daily operations"
           links={trackLinks}
           onNavigate={closeMenu}
           pathname={pathname}

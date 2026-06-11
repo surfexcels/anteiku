@@ -12,8 +12,14 @@ export async function dashboardFetch<T>(
 
   const request = fetch(url, { cache: "no-store" })
     .then(async (response) => {
-      if (!response.ok) throw new Error("Request failed");
-      return response.json() as Promise<T>;
+      if (!response.ok) {
+        throw new Error(`Request failed (${response.status})`);
+      }
+      try {
+        return (await response.json()) as T;
+      } catch {
+        throw new Error("Invalid response payload");
+      }
     })
     .then((payload) => {
       writeCachedData(cacheKey, payload, ttlMs);

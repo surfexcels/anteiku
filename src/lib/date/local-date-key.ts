@@ -13,6 +13,18 @@ export function startOfLocalDay(daysAgo = 0): Date {
   return date;
 }
 
+export function nextDateKey(stockDate: string): string {
+  const date = new Date(`${stockDate}T12:00:00`);
+  date.setDate(date.getDate() + 1);
+  return localDateKey(date);
+}
+
+export function previousDateKey(stockDate: string): string {
+  const date = new Date(`${stockDate}T12:00:00`);
+  date.setDate(date.getDate() - 1);
+  return localDateKey(date);
+}
+
 export function buildLocalDateRange(dayCount: number, endDaysAgo = 0): string[] {
   const end = startOfLocalDay(endDaysAgo);
   const start = new Date(end);

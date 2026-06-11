@@ -13,6 +13,7 @@ import type {
   CarbonOverviewAnalytics,
   EmpCoReadiness,
 } from "@/src/modules/sustainability/domain/carbon";
+import { ChecklistMarker } from "./dashboard-icons";
 import { CalculationExplainer } from "./calculation-explainer";
 import { CarbonCalculationCopy } from "./carbon-calculation-copy";
 import { PageSkeleton } from "./page-skeleton";
@@ -181,7 +182,7 @@ export function SustainabilityPageClient() {
         <ul className="empco-checklist">
           {data.empco.checklist.map((item) => (
             <li className={item.done ? "done" : undefined} key={item.id}>
-              <span aria-hidden>{item.done ? "✓" : "○"}</span>
+              <ChecklistMarker done={item.done} />
               <div>
                 <strong>{item.label}</strong>
                 <p>{item.detail}</p>

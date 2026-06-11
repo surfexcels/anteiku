@@ -6,6 +6,7 @@ import {
 } from "@/src/lib/client/dashboard-cache-keys";
 import { useDashboardBootstrap } from "@/src/lib/client/use-dashboard-bootstrap";
 import type { Report } from "@/src/modules/reports/domain/report";
+import { PageHeaderStats } from "../page-header-stats";
 import { PageSkeleton } from "../page-skeleton";
 import { ReportsPanel } from "./reports-panel";
 
@@ -58,32 +59,21 @@ export function ReportsPageClient() {
             your team or accountant.
           </p>
         </div>
-        <div className="waste-page-stats">
-          <div className="waste-stat-pill">
-            <div>
-              <span>Reports</span>
-              <strong>{data.reports.length}</strong>
-            </div>
-          </div>
-          <div className="waste-stat-pill">
-            <div>
-              <span>Total logged</span>
-              <strong>
-                {new Intl.NumberFormat(undefined, {
-                  style: "currency",
-                  currency: data.currencyCode,
-                  maximumFractionDigits: 0,
-                }).format(totalWasteMinor / 100)}
-              </strong>
-            </div>
-          </div>
-          <div className="waste-stat-pill">
-            <div>
-              <span>Entries</span>
-              <strong>{totalEntries}</strong>
-            </div>
-          </div>
-        </div>
+        <PageHeaderStats
+          items={[
+            { label: "Reports", value: data.reports.length },
+            {
+              label: "Total logged",
+              value: new Intl.NumberFormat(undefined, {
+                style: "currency",
+                currency: data.currencyCode,
+                maximumFractionDigits: 0,
+              }).format(totalWasteMinor / 100),
+              compact: true,
+            },
+            { label: "Entries", value: totalEntries },
+          ]}
+        />
       </header>
       <ReportsPanel currencyCode={data.currencyCode} initialReports={data.reports} />
     </main>

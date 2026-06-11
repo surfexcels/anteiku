@@ -49,7 +49,7 @@ export async function processSupplierImport(input: {
         input.menuProducts,
       );
       let aiUsed = false;
-      let message = `Extracted ${lineItems.length} line${lineItems.length === 1 ? "" : "s"} via ${extraction.method}.`;
+      let message = `Read ${lineItems.length} product line${lineItems.length === 1 ? "" : "s"} from your file.`;
 
       const matchedCount = lineItems.filter((line) => line.matchedProductId).length;
       const needsAi =
@@ -76,9 +76,10 @@ export async function processSupplierImport(input: {
 
       const finalMatched = lineItems.filter((line) => line.matchedProductId).length;
       if (!aiUsed && finalMatched > 0) {
-        message = `Matched ${finalMatched} of ${lineItems.length} supplier lines to your menu (${extraction.method}).`;
+        message = `Matched ${finalMatched} of ${lineItems.length} supplier lines to your menu.`;
       } else if (!aiUsed && lineItems.length === 0) {
-        message = `OCR completed (${extraction.method}) but no product lines were detected.`;
+        message =
+          "We read the file but couldn't find product lines. Try a clearer PDF or export as CSV.";
       }
 
       return buildResult({
@@ -107,7 +108,7 @@ export async function processSupplierImport(input: {
       ocrUsed: false,
       message:
         dataRows > 0
-          ? `Stored ${dataRows} supplier line${dataRows === 1 ? "" : "s"}. Start the Python OCR service for structured extraction.`
+          ? `Stored ${dataRows} supplier line${dataRows === 1 ? "" : "s"}. Upload a PDF invoice for automatic line reading.`
           : "CSV stored. Add product rows to match against your menu.",
     });
   }
@@ -116,7 +117,7 @@ export async function processSupplierImport(input: {
     lineItems: [],
     ocrUsed: false,
     message: isOcrServiceConfigured()
-      ? "Invoice stored. OCR could not read this file — try CSV or a clearer PDF."
-      : "Invoice stored. Start the Python OCR service (see services/ocr/README.md).",
+      ? "Invoice stored. We couldn't read this file — try CSV or a clearer PDF."
+      : "Invoice stored. PDF reading isn't available yet — try CSV or Excel for now.",
   });
 }

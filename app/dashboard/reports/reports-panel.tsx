@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import { EmptyStateVisual } from "../dashboard-icons";
 import { formatMoney } from "@/src/lib/format-money";
 import type { Report } from "@/src/modules/reports/domain/report";
 
@@ -222,9 +223,7 @@ export function ReportsPanel({
 
         {reports.length === 0 ? (
           <div className="empty-state-app report-empty">
-            <span className="empty-state-icon" aria-hidden>
-              📊
-            </span>
+            <EmptyStateVisual icon="reports" />
             <strong>No reports yet</strong>
             <p>Pick a date range above and generate your first weekly summary.</p>
           </div>

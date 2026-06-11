@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { invalidateWasteCaches } from "@/src/lib/client/invalidate-dashboard-caches";
 import type { BusinessProduct } from "@/src/modules/catalog/domain/catalog-product";
 import type { WasteLog, WasteReason } from "@/src/modules/waste/domain/waste";
+import { EmptyStateVisual } from "../dashboard-icons";
 import { QuickClosePanel } from "./quick-close-panel";
 import { SpreadsheetImportPanel } from "./spreadsheet-import-panel";
 import { WasteLogPanel } from "./waste-log-panel";
@@ -15,11 +16,13 @@ export function WasteWorkspace({
   initialLogs,
   products,
   reasons,
+  variant = "hub",
 }: {
   currencyCode: string;
   initialLogs: WasteLog[];
   products: BusinessProduct[];
   reasons: WasteReason[];
+  variant?: "hub" | "embedded";
 }) {
   const [tab, setTab] = useState<Tab>("quick");
   const [isPending, startTransition] = useTransition();
@@ -115,14 +118,18 @@ export function WasteWorkspace({
       <section className="panel-app">
         <div className="panel-head-app">
           <div>
-            <h2>Recent entries</h2>
-            <p>Replaces your spreadsheet history — always in euros</p>
+            <h2>{variant === "hub" ? "Full history" : "Recent entries"}</h2>
+            <p>
+              {variant === "hub"
+                ? "All logged waste — use filters in export for accounting periods."
+                : "Latest waste entries across dates."}
+            </p>
           </div>
           <span>{logs.length}</span>
         </div>
         {logs.length === 0 ? (
           <div className="empty-state-app">
-            <span className="empty-state-icon" aria-hidden>🗑️</span>
+            <EmptyStateVisual icon="waste" />
             <strong>No entries yet</strong>
             <p>Use Quick close at the end of the day instead of a spreadsheet row.</p>
           </div>

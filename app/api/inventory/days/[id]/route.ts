@@ -7,7 +7,7 @@ import {
 } from "@/src/modules/inventory/application/inventory-schemas";
 import { SupabaseInventoryRepository } from "@/src/modules/inventory/infrastructure/supabase-inventory-repository";
 
-const patchSchema = z.union([
+const patchSchema = z.discriminatedUnion("action", [
   updateOpeningSchema.extend({ action: z.literal("opening") }),
   closeInventoryDaySchema.extend({ action: z.literal("close") }),
 ]);
@@ -50,8 +50,10 @@ export async function PATCH(
   const parsed = patchSchema.safeParse(body);
 
   if (!parsed.success) {
+    const issue = parsed.error.issues[0];
+    const path = issue?.path.length ? ` (${issue.path.join(".")})` : "";
     return NextResponse.json(
-      { error: parsed.error.issues[0]?.message ?? "Invalid request" },
+      { error: `${issue?.message ?? "Invalid request"}${path}` },
       { status: 400 },
     );
   }

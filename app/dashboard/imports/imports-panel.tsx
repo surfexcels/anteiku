@@ -1,6 +1,8 @@
 "use client";
 
 import { type DragEvent, FormEvent, useCallback, useRef, useState } from "react";
+import { formatImportSourceLabel } from "@/src/lib/imports/import-display";
+import { DashboardIcon, EmptyStateVisual } from "../dashboard-icons";
 import type { SupplierImport } from "@/src/modules/imports/domain/supplier-import";
 
 const ACCEPTED_TYPES = ".pdf,.csv,.xlsx";
@@ -111,8 +113,7 @@ export function ImportsPanel({
             <div>
               <h2>Register supplier invoice</h2>
               <p>
-                Drop a supplier file — OCR extracts line items and matches them to your
-                menu.
+                Drop a supplier file — we read line items and match them to your menu.
               </p>
             </div>
           </div>
@@ -182,7 +183,7 @@ export function ImportsPanel({
               ) : (
                 <>
                   <span className="import-dropzone-icon" aria-hidden>
-                    ↑
+                    <DashboardIcon name="upload" size={22} />
                   </span>
                   <strong>Drag invoice here or click to browse</strong>
                   <small>PDF, CSV, or Excel up to your storage limit</small>
@@ -226,15 +227,15 @@ export function ImportsPanel({
             <li>
               <span>2</span>
               <div>
-                <strong>OCR extraction</strong>
-                <p>Python service reads product names, quantities, and costs.</p>
+                <strong>Read the invoice</strong>
+                <p>Product names, quantities, and costs are pulled from the file.</p>
               </div>
             </li>
             <li>
               <span>3</span>
               <div>
                 <strong>Menu matching</strong>
-                <p>Lines are matched to your products — AI helps fuzzy names.</p>
+                <p>Lines are matched to your menu, including similar product names.</p>
               </div>
             </li>
           </ol>
@@ -266,9 +267,7 @@ export function ImportsPanel({
 
         {imports.length === 0 ? (
           <div className="empty-state-app import-empty">
-            <span className="empty-state-icon" aria-hidden>
-              📄
-            </span>
+            <EmptyStateVisual icon="imports" />
             <strong>No imports yet</strong>
             <p>
               Upload your first supplier invoice above. Matched lines will update product
@@ -309,10 +308,12 @@ export function ImportsPanel({
                         </>
                       )}
                       {item.result?.ocrMethod && (
-                        <span className="import-method-tag">{item.result.ocrMethod}</span>
+                        <span className="import-method-tag">
+                          {formatImportSourceLabel(item.result.ocrMethod)}
+                        </span>
                       )}
                       {item.result?.aiUsed && (
-                        <span className="import-method-tag ai">AI assist</span>
+                        <span className="import-method-tag ai">Smart match</span>
                       )}
                     </div>
                   )}

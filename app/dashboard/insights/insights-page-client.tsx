@@ -6,6 +6,7 @@ import {
 } from "@/src/lib/client/dashboard-cache-keys";
 import { useDashboardBootstrap } from "@/src/lib/client/use-dashboard-bootstrap";
 import type { Recommendation } from "@/src/modules/recommendations/domain/recommendation";
+import { PageHeaderStats } from "../page-header-stats";
 import { PageSkeleton } from "../page-skeleton";
 import { InsightsPanel } from "./insights-panel";
 
@@ -57,32 +58,29 @@ export function InsightsPageClient() {
             you&apos;ll implement.
           </p>
         </div>
-        <div className="waste-page-stats">
-          <div className="waste-stat-pill">
-            <div>
-              <span>New</span>
-              <strong>{newCount}</strong>
-            </div>
-          </div>
-          <div className="waste-stat-pill">
-            <div>
-              <span>Accepted</span>
-              <strong>{acceptedCount}</strong>
-            </div>
-          </div>
-          <div className="waste-stat-pill">
-            <div>
-              <span>Potential / yr</span>
-              <strong>
-                {new Intl.NumberFormat(undefined, {
-                  style: "currency",
-                  currency: data.currencyCode,
-                  maximumFractionDigits: 0,
-                }).format(potentialSavings / 100)}
-              </strong>
-            </div>
-          </div>
-        </div>
+        <PageHeaderStats
+          items={[
+            {
+              label: "New",
+              value: newCount,
+              tone: newCount > 0 ? "active" : "muted",
+            },
+            {
+              label: "Accepted",
+              value: acceptedCount,
+              tone: acceptedCount > 0 ? "positive" : "default",
+            },
+            {
+              label: "Potential / yr",
+              value: new Intl.NumberFormat(undefined, {
+                style: "currency",
+                currency: data.currencyCode,
+                maximumFractionDigits: 0,
+              }).format(potentialSavings / 100),
+              compact: true,
+            },
+          ]}
+        />
       </header>
       <InsightsPanel
         currencyCode={data.currencyCode}

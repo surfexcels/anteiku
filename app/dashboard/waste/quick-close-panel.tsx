@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { EmptyStateVisual } from "../dashboard-icons";
 import { formatMoney } from "@/src/lib/format-money";
 import type { BusinessProduct } from "@/src/modules/catalog/domain/catalog-product";
 import type { WasteLog, WasteReason } from "@/src/modules/waste/domain/waste";
@@ -94,7 +95,7 @@ export function QuickClosePanel({
     return (
       <section className="panel-app">
         <div className="empty-state-app">
-          <span className="empty-state-icon" aria-hidden>📦</span>
+          <EmptyStateVisual icon="products" />
           <strong>Add menu items first</strong>
           <p>Quick close works from the products you set up with unit costs.</p>
         </div>

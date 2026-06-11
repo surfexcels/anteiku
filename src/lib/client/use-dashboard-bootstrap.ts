@@ -5,6 +5,7 @@ import { dashboardFetch } from "@/src/lib/client/dashboard-fetch";
 import {
   getCacheAgeMs,
   hydrateCachedData,
+  invalidateCachedData,
   writeCachedData,
 } from "@/src/lib/client/request-cache";
 
@@ -50,7 +51,20 @@ export function useDashboardBootstrap<T>(cacheKey: string, url: string) {
     };
   }, [cacheKey, url]);
 
-  return { data, error, isLoading, refresh: () => dashboardFetch<T>(url, cacheKey) };
+  async function refresh(): Promise<T | null> {
+    invalidateCachedData(cacheKey);
+    try {
+      const payload = await dashboardFetch<T>(url, cacheKey, DASHBOARD_CACHE_TTL_MS);
+      setData(payload);
+      setError("");
+      return payload;
+    } catch {
+      setError("Could not load this page. Refresh to try again.");
+      return null;
+    }
+  }
+
+  return { data, error, isLoading, refresh };
 }
 
 export function prefetchDashboardBootstrap(url: string, cacheKey?: string) {
@@ -59,5 +73,7 @@ export function prefetchDashboardBootstrap(url: string, cacheKey?: string) {
   if (cacheAge !== null && cacheAge < DASHBOARD_STALE_MS) {
     return Promise.resolve();
   }
-  return dashboardFetch(url, key, DASHBOARD_CACHE_TTL_MS).then(() => undefined);
+  return dashboardFetch(url, key, DASHBOARD_CACHE_TTL_MS)
+    .then(() => undefined)
+    .catch(() => undefined);
 }
