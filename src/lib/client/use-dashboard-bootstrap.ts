@@ -8,6 +8,7 @@ import {
   invalidateCachedData,
   writeCachedData,
 } from "@/src/lib/client/request-cache";
+import { WORKSPACE_CHANGED_EVENT } from "@/src/lib/client/workspace-events";
 
 const DASHBOARD_CACHE_TTL_MS = 5 * 60_000;
 const DASHBOARD_STALE_MS = 5 * 60_000;
@@ -59,8 +60,16 @@ export function useDashboardBootstrap<T>(cacheKey: string, url: string) {
       void load(true);
     }
 
+    function handleWorkspaceChanged() {
+      invalidateCachedData(cacheKey);
+      void load(true);
+    }
+
+    window.addEventListener(WORKSPACE_CHANGED_EVENT, handleWorkspaceChanged);
+
     return () => {
       cancelled = true;
+      window.removeEventListener(WORKSPACE_CHANGED_EVENT, handleWorkspaceChanged);
     };
   }, [cacheKey, url]);
 

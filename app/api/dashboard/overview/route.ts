@@ -24,7 +24,7 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const days = parseDays(searchParams.get("days"));
-  const cacheKey = `overview:${context.business.id}:${days}`;
+  const cacheKey = `overview:${context.business.id}:${context.location.id}:${days}`;
 
   const cached = await readServerCache<Record<string, unknown>>(cacheKey);
   if (cached) {
@@ -42,9 +42,16 @@ export async function GET(request: Request) {
     const importRepository = new SupabaseSupplierImportRepository(context.supabase);
 
     const [analytics, products, recommendations, imports] = await Promise.all([
-      wasteRepository.getOverviewAnalytics(context.business.id, days),
-      catalogRepository.listBusinessProducts(context.business.id),
-      recommendationRepository.list(context.business.id),
+      wasteRepository.getOverviewAnalytics(
+        context.business.id,
+        context.location.id,
+        days,
+      ),
+      catalogRepository.listBusinessProductsForLocation(
+        context.business.id,
+        context.location.id,
+      ),
+      recommendationRepository.list(context.business.id, context.location.id),
       importRepository.list(context.business.id),
     ]);
 

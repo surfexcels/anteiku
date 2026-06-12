@@ -14,7 +14,9 @@ import { invalidateWorkspaceCaches } from "@/src/lib/client/invalidate-dashboard
 import {
   cachedFetch,
   hydrateCachedData,
+  writeCachedData,
 } from "@/src/lib/client/request-cache";
+import { notifyWorkspaceChanged } from "@/src/lib/client/workspace-events";
 import { prefetchDashboardBootstrap } from "@/src/lib/client/use-dashboard-bootstrap";
 import { AnteikuLogo } from "@/app/components/anteiku-logo";
 import { DashboardMobileBar } from "./dashboard-mobile-bar";
@@ -78,9 +80,11 @@ export function DashboardShell({
     invalidateWorkspaceCaches();
     const response = await fetch(DASHBOARD_BOOTSTRAP_URL.business);
     if (response.ok) {
-      setWorkspace(await response.json());
+      const payload = (await response.json()) as BusinessContext;
+      writeCachedData(DASHBOARD_CACHE.business, payload);
+      setWorkspace(payload);
     }
-    router.refresh();
+    notifyWorkspaceChanged();
   }
 
   useEffect(() => {
@@ -139,36 +143,19 @@ export function DashboardShell({
         <AnteikuLogo href="/dashboard" size="sm" variant="sidebar" />
         <DashboardNav
           isPlatformAdmin={Boolean(workspace?.isPlatformAdmin)}
-          onLocationChanged={refreshWorkspaceAfterLocationChange}
           onOpenChange={setNavOpen}
           open={navOpen}
           signOutAction={signOutAction}
-          workspace={workspace}
         />
         <div className="app-sidebar-foot">
-          {workspace?.locations && workspace.locations.length > 0 ? (
-            <WorkspaceLocationSwitcher
-              activeLocationId={
-                workspace.location?.id ?? workspace.locations[0]?.id ?? ""
-              }
-              canManageLocations={
-                workspace.business.role === "owner" ||
-                workspace.business.role === "admin"
-              }
-              locations={workspace.locations}
-              onChanged={refreshWorkspaceAfterLocationChange}
-            />
-          ) : null}
           <div className="app-business">
             <span>
               {workspace ? workspace.business.name.slice(0, 2).toUpperCase() : "..."}
             </span>
             <div>
               <strong>{workspace?.business.name ?? "Loading"}</strong>
-              <small>
-                {workspace?.location.name
-                  ? `${workspace.location.name} / ${workspace.business.role}`
-                  : workspace?.business.role ?? ""}
+              <small className="app-business-role">
+                {workspace?.business.role ?? ""}
               </small>
             </div>
           </div>
@@ -223,27 +210,29 @@ function WorkspaceContextBand({
     workspace?.location?.id ?? workspace?.locations[0]?.id ?? "";
 
   return (
-    <section className="workspace-context-band" aria-label="Active workspace">
-      <div className="workspace-context-copy">
-        <span>Active workspace</span>
-        <strong>{workspace?.business.name ?? "Loading workspace"}</strong>
-        <p>
-          Daily stock, waste, reports, and floor mode follow the active location
-          below.
-        </p>
+    <section
+      className="workspace-context-band workspace-context-band-compact"
+      aria-label="Active workspace"
+    >
+      <div className="workspace-context-inline">
+        <div className="workspace-context-primary">
+          <strong className="workspace-context-business">
+            {workspace?.business.name ?? "Loading"}
+          </strong>
+        </div>
+        {workspace && workspace.locations.length > 0 ? (
+          <WorkspaceLocationSwitcher
+            activeLocationId={activeLocationId}
+            canManageLocations={
+              workspace.business.role === "owner" ||
+              workspace.business.role === "admin"
+            }
+            locations={workspace.locations}
+            onChanged={onLocationChanged}
+            variant="compact"
+          />
+        ) : null}
       </div>
-      {workspace && workspace.locations.length > 0 ? (
-        <WorkspaceLocationSwitcher
-          activeLocationId={activeLocationId}
-          canManageLocations={
-            workspace.business.role === "owner" ||
-            workspace.business.role === "admin"
-          }
-          locations={workspace.locations}
-          onChanged={onLocationChanged}
-          variant="bar"
-        />
-      ) : null}
     </section>
   );
 }

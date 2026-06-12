@@ -8,11 +8,15 @@ export async function GET() {
 
   try {
     const repository = new SupabaseCatalogRepository(context.supabase);
-    const products = await repository.listBusinessProducts(context.business.id);
+    const products = await repository.listBusinessProductsForLocation(
+      context.business.id,
+      context.location.id,
+    );
 
     return NextResponse.json({
       countryCode: context.business.countryCode,
       currencyCode: context.business.currencyCode,
+      locationName: context.location.name,
       products,
     });
   } catch {

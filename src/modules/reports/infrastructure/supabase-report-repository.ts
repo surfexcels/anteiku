@@ -38,12 +38,17 @@ export class SupabaseReportRepository implements ReportRepository {
     return data ? mapReport(data as ReportRow) : null;
   }
 
-  async list(businessId: string): Promise<Report[]> {
-    const { data, error } = await this.client
+  async list(businessId: string, locationId?: string): Promise<Report[]> {
+    let query = this.client
       .from("reports")
       .select("id, period_start, period_end, summary, created_at")
-      .eq("business_id", businessId)
-      .order("created_at", { ascending: false });
+      .eq("business_id", businessId);
+
+    if (locationId) {
+      query = query.eq("location_id", locationId);
+    }
+
+    const { data, error } = await query.order("created_at", { ascending: false });
 
     if (error) throw error;
     return ((data ?? []) as ReportRow[]).map(mapReport);
@@ -53,12 +58,18 @@ export class SupabaseReportRepository implements ReportRepository {
     const start = `${input.periodStart}T00:00:00.000Z`;
     const end = `${input.periodEnd}T23:59:59.999Z`;
 
-    const { data: logs, error: logsError } = await this.client
+    let logsQuery = this.client
       .from("waste_logs")
       .select("total_cost_minor, business_products(name)")
       .eq("business_id", input.businessId)
       .gte("occurred_at", start)
       .lte("occurred_at", end);
+
+    if (input.locationId) {
+      logsQuery = logsQuery.eq("location_id", input.locationId);
+    }
+
+    const { data: logs, error: logsError } = await logsQuery;
 
     if (logsError) throw logsError;
 

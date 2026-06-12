@@ -11,7 +11,10 @@ export async function GET() {
 
   try {
     const repository = new SupabaseReportRepository(context.supabase);
-    const reports = await repository.list(context.business.id);
+    const reports = await repository.list(
+      context.business.id,
+      context.location.id,
+    );
     return NextResponse.json({ reports });
   } catch {
     return NextResponse.json({ error: "Could not load reports" }, { status: 500 });

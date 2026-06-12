@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { WorkspaceLocationSwitcher } from "./workspace-location-switcher";
 import { hydrateCachedData } from "@/src/lib/client/request-cache";
 import {
   bootstrapUrlForPath,
@@ -34,12 +33,11 @@ type NavLink = {
   label: string;
   icon: string;
   exact?: boolean;
-  emphasis?: boolean;
 };
 
 const trackLinks: NavLink[] = [
   { href: "/dashboard", label: "Overview", icon: "overview", exact: true },
-  { href: "/dashboard/floor", label: "Floor mode", icon: "floor", emphasis: true },
+  { href: "/dashboard/floor", label: "Floor mode", icon: "floor" },
   { href: "/dashboard/inventory", label: "Daily stock", icon: "inventory" },
   { href: "/dashboard/waste", label: "Waste log", icon: "waste" },
   { href: "/dashboard/sustainability", label: "Carbon", icon: "carbon" },
@@ -81,12 +79,7 @@ function NavSection({
       <span className="app-nav-section-label">{label}</span>
       {links.map((link) => (
         <Link
-          className={[
-            isActive(pathname, link) ? "active" : "",
-            link.emphasis ? "emphasis" : "",
-          ]
-            .filter(Boolean)
-            .join(" ") || undefined}
+          className={isActive(pathname, link) ? "active" : undefined}
           href={link.href}
           key={link.href}
           onClick={onNavigate}
@@ -110,26 +103,16 @@ interface BusinessNavContext {
   };
 }
 
-interface DashboardNavWorkspace {
-  business: { name: string; role: string };
-  location: { id: string; name: string };
-  locations: Array<{ id: string; name: string }>;
-}
-
 export function DashboardNav({
   open,
   onOpenChange,
-  onLocationChanged,
   signOutAction,
   isPlatformAdmin = false,
-  workspace = null,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onLocationChanged?: () => Promise<void>;
   signOutAction: () => Promise<void>;
   isPlatformAdmin?: boolean;
-  workspace?: DashboardNavWorkspace | null;
 }) {
   const pathname = usePathname();
   const [canManageSettings, setCanManageSettings] = useState(
@@ -200,25 +183,6 @@ export function DashboardNav({
         aria-hidden={!open}
         className={open ? "app-nav-open" : undefined}
       >
-        {workspace && workspace.locations.length > 0 ? (
-          <div className="app-nav-location">
-            <WorkspaceLocationSwitcher
-              activeLocationId={
-                workspace.location?.id ?? workspace.locations[0]?.id ?? ""
-              }
-              canManageLocations={
-                workspace.business.role === "owner" ||
-                workspace.business.role === "admin"
-              }
-              locations={workspace.locations}
-              onChanged={async () => {
-                await onLocationChanged?.();
-                closeMenu();
-              }}
-              variant="sidebar"
-            />
-          </div>
-        ) : null}
         <NavSection
           label="Daily operations"
           links={trackLinks}

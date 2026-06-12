@@ -15,8 +15,8 @@ export async function generateRecommendation(
   input: GenerateRecommendationInput,
 ): Promise<Recommendation> {
   const [summary, trend] = await Promise.all([
-    wasteRepository.getSummary(input.businessId, 30),
-    wasteRepository.getDailyTrend(input.businessId, 14),
+    wasteRepository.getSummary(input.businessId, input.locationId, 30),
+    wasteRepository.getDailyTrend(input.businessId, input.locationId, 14),
   ]);
 
   if (summary.topProducts.length === 0) {

@@ -26,6 +26,7 @@ export async function POST(request: Request) {
     const repository = new SupabaseCatalogRepository(context.supabase);
     const product = await repository.addCustomBusinessProduct({
       businessId: context.business.id,
+      locationId: context.location.id,
       userId: context.userId,
       name: parsed.data.name,
       unit: parsed.data.unit,

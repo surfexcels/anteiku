@@ -15,6 +15,7 @@ import type {
 
 interface InventoryDayRow {
   id: string;
+  location_id: string;
   stock_date: string;
   status: "open" | "closed";
   note: string | null;
@@ -126,7 +127,7 @@ export class SupabaseInventoryRepository implements InventoryRepository {
   ): Promise<InventoryDayDetail | null> {
     const { data: day, error: dayError } = await this.supabase
       .from("inventory_days")
-      .select("id, stock_date, status, note, opened_at, closed_at")
+      .select("id, location_id, stock_date, status, note, opened_at, closed_at")
       .eq("business_id", businessId)
       .eq("id", dayId)
       .maybeSingle();
@@ -177,7 +178,7 @@ export class SupabaseInventoryRepository implements InventoryRepository {
         opened_by: input.userId,
         created_by: input.userId,
       })
-      .select("id, stock_date, status, note, opened_at, closed_at")
+      .select("id, location_id, stock_date, status, note, opened_at, closed_at")
       .single();
 
     if (dayError) throw dayError;
@@ -342,6 +343,7 @@ export class SupabaseInventoryRepository implements InventoryRepository {
 
     const wasteByProduct = await this.wasteByProductForDate(
       businessId,
+      day.location_id,
       day.stock_date,
     );
 
@@ -385,7 +387,11 @@ export class SupabaseInventoryRepository implements InventoryRepository {
     };
   }
 
-  private async wasteByProductForDate(businessId: string, stockDate: string) {
+  private async wasteByProductForDate(
+    businessId: string,
+    locationId: string,
+    stockDate: string,
+  ) {
     const start = new Date(`${stockDate}T00:00:00`);
     const end = new Date(`${stockDate}T23:59:59.999`);
 
@@ -393,6 +399,7 @@ export class SupabaseInventoryRepository implements InventoryRepository {
       .from("waste_logs")
       .select("business_product_id, quantity, total_cost_minor, occurred_at")
       .eq("business_id", businessId)
+      .eq("location_id", locationId)
       .gte("occurred_at", start.toISOString())
       .lte("occurred_at", end.toISOString());
 

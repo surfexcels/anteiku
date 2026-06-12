@@ -21,7 +21,10 @@ export async function GET(request: Request) {
 
     const [products, recentDays, day, priorDay, wasteLogs, wasteReasons] =
       await Promise.all([
-        catalogRepository.listBusinessProducts(context.business.id),
+        catalogRepository.listBusinessProductsForLocation(
+          context.business.id,
+          context.location.id,
+        ),
         inventoryRepository.listRecentDays(
           context.business.id,
           context.location.id,
@@ -37,7 +40,11 @@ export async function GET(request: Request) {
           context.location.id,
           yesterdayDate,
         ),
-        wasteRepository.listLogsForDate(context.business.id, stockDate),
+        wasteRepository.listLogsForDate(
+          context.business.id,
+          stockDate,
+          context.location.id,
+        ),
         wasteRepository.listReasons(context.business.id),
       ]);
 

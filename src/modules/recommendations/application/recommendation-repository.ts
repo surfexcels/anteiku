@@ -14,7 +14,7 @@ export interface CreateRecommendationInput {
 }
 
 export interface RecommendationRepository {
-  list(businessId: string): Promise<Recommendation[]>;
+  list(businessId: string, locationId?: string): Promise<Recommendation[]>;
   create(input: CreateRecommendationInput): Promise<Recommendation>;
   updateStatus(
     businessId: string,

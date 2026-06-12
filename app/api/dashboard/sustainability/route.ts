@@ -28,7 +28,7 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const days = parseDays(searchParams.get("days"));
-  const cacheKey = `sustainability:${context.business.id}:${days}`;
+  const cacheKey = `sustainability:${context.business.id}:${context.location.id}:${days}`;
 
   const cached = await readServerCache<Record<string, unknown>>(cacheKey);
   if (cached) {
@@ -42,8 +42,15 @@ export async function GET(request: Request) {
     const catalogRepository = new SupabaseCatalogRepository(context.supabase);
 
     const [analytics, products] = await Promise.all([
-      wasteRepository.getOverviewAnalytics(context.business.id, days),
-      catalogRepository.listBusinessProducts(context.business.id),
+      wasteRepository.getOverviewAnalytics(
+        context.business.id,
+        context.location.id,
+        days,
+      ),
+      catalogRepository.listBusinessProductsForLocation(
+        context.business.id,
+        context.location.id,
+      ),
     ]);
 
     const empco = buildEmpCoReadiness(

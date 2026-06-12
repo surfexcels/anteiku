@@ -3,6 +3,7 @@ import { getBusinessContext } from "@/src/lib/auth/get-business-context";
 import { verifyMutationRequest } from "@/src/lib/auth/verify-api-request";
 import { invalidateBusinessDashboardCache } from "@/src/lib/cache/invalidate-business-dashboard-cache";
 import { batchWasteLogSchema } from "@/src/modules/waste/application/waste-schemas";
+import { SupabaseCatalogRepository } from "@/src/modules/catalog/infrastructure/supabase-catalog-repository";
 import { SupabaseWasteRepository } from "@/src/modules/waste/infrastructure/supabase-waste-repository";
 
 export async function POST(request: Request) {
@@ -21,6 +22,21 @@ export async function POST(request: Request) {
   }
 
   try {
+    const catalogRepository = new SupabaseCatalogRepository(context.supabase);
+    for (const entry of parsed.data.entries) {
+      const allowed = await catalogRepository.isProductAtLocation(
+        context.business.id,
+        context.location.id,
+        entry.businessProductId,
+      );
+      if (!allowed) {
+        return NextResponse.json(
+          { error: "One or more products are not on your active site menu" },
+          { status: 400 },
+        );
+      }
+    }
+
     const repository = new SupabaseWasteRepository(context.supabase);
     const logs = await repository.createLogsBatch({
       businessId: context.business.id,

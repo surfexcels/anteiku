@@ -56,14 +56,24 @@ export class SupabaseRecommendationRepository
     return mapRecommendation(data as RecommendationRow);
   }
 
-  async list(businessId: string): Promise<Recommendation[]> {
-    const { data, error } = await this.client
+  async list(
+    businessId: string,
+    locationId?: string,
+  ): Promise<Recommendation[]> {
+    let query = this.client
       .from("recommendations")
       .select(
         "id, title, explanation, estimated_annual_impact_minor, currency_code, status, generated_at",
       )
-      .eq("business_id", businessId)
-      .order("generated_at", { ascending: false });
+      .eq("business_id", businessId);
+
+    if (locationId) {
+      query = query.eq("location_id", locationId);
+    }
+
+    const { data, error } = await query.order("generated_at", {
+      ascending: false,
+    });
 
     if (error) throw error;
     return ((data ?? []) as RecommendationRow[]).map(mapRecommendation);

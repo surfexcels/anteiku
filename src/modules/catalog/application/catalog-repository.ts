@@ -11,6 +11,7 @@ export interface SearchCatalogInput {
 
 export interface AddBusinessProductInput {
   businessId: string;
+  locationId: string;
   userId: string;
   catalogSourceId: string;
   name: string;
@@ -25,6 +26,7 @@ export interface AddBusinessProductInput {
 
 export interface AddCustomBusinessProductInput {
   businessId: string;
+  locationId: string;
   userId: string;
   name: string;
   unit: ProductUnit;
@@ -49,6 +51,20 @@ export interface UpdateBusinessProductInput {
 
 export interface CatalogRepository {
   listBusinessProducts(businessId: string): Promise<BusinessProduct[]>;
+  listBusinessProductsForLocation(
+    businessId: string,
+    locationId: string,
+  ): Promise<BusinessProduct[]>;
+  assignProductToLocation(
+    businessId: string,
+    locationId: string,
+    productId: string,
+  ): Promise<void>;
+  isProductAtLocation(
+    businessId: string,
+    locationId: string,
+    productId: string,
+  ): Promise<boolean>;
   addBusinessProduct(input: AddBusinessProductInput): Promise<BusinessProduct>;
   addCustomBusinessProduct(
     input: AddCustomBusinessProductInput,

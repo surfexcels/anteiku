@@ -22,7 +22,10 @@ export async function GET() {
     const wasteRepository = new SupabaseWasteRepository(context.supabase);
 
     const [products, inventoryDay, wasteLogs] = await Promise.all([
-      catalogRepository.listBusinessProducts(context.business.id),
+      catalogRepository.listBusinessProductsForLocation(
+        context.business.id,
+        context.location.id,
+      ),
       inventoryRepository.getDayByDate(
         context.business.id,
         context.location.id,

@@ -12,7 +12,10 @@ export async function GET() {
 
   try {
     const repository = new SupabaseRecommendationRepository(context.supabase);
-    const recommendations = await repository.list(context.business.id);
+    const recommendations = await repository.list(
+      context.business.id,
+      context.location.id,
+    );
     return NextResponse.json({ recommendations });
   } catch {
     return NextResponse.json(

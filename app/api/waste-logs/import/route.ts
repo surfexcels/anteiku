@@ -36,13 +36,15 @@ export async function POST(request: Request) {
     const wasteRepository = new SupabaseWasteRepository(context.supabase);
 
     const [products, reasons, content] = await Promise.all([
-      catalogRepository.listBusinessProducts(context.business.id),
+      catalogRepository.listBusinessProductsForLocation(
+        context.business.id,
+        context.location.id,
+      ),
       wasteRepository.listReasons(context.business.id),
       file.text(),
     ]);
 
-    const activeProducts = products.filter((product) => product.isActive);
-    const preview = previewWasteSpreadsheetImport(content, activeProducts);
+    const preview = previewWasteSpreadsheetImport(content, products);
 
     if (previewOnly) {
       return NextResponse.json({ preview });

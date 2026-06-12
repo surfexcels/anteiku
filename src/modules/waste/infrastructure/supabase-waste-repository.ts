@@ -125,23 +125,18 @@ export class SupabaseWasteRepository implements WasteRepository {
   async listLogsForExport(
     businessId: string,
     days: number,
-    locationId?: string,
+    locationId: string,
   ): Promise<Array<WasteLog & { locationName: string | null }>> {
     const since = new Date();
     since.setDate(since.getDate() - days);
 
-    let query = this.client
+    const { data, error } = await this.client
       .from("waste_logs")
       .select(WASTE_LOG_EXPORT_SELECT)
       .eq("business_id", businessId)
+      .eq("location_id", locationId)
       .gte("occurred_at", since.toISOString())
       .order("occurred_at", { ascending: false });
-
-    if (locationId) {
-      query = query.eq("location_id", locationId);
-    }
-
-    const { data, error } = await query;
 
     if (error) throw error;
     return ((data ?? []) as unknown as WasteLogRow[]).map((row) => ({
@@ -150,11 +145,16 @@ export class SupabaseWasteRepository implements WasteRepository {
     }));
   }
 
-  async listLogs(businessId: string, limit = 50): Promise<WasteLog[]> {
+  async listLogs(
+    businessId: string,
+    locationId: string,
+    limit = 50,
+  ): Promise<WasteLog[]> {
     const { data, error } = await this.client
       .from("waste_logs")
       .select(WASTE_LOG_SELECT)
       .eq("business_id", businessId)
+      .eq("location_id", locationId)
       .order("occurred_at", { ascending: false })
       .limit(limit);
 
@@ -165,24 +165,19 @@ export class SupabaseWasteRepository implements WasteRepository {
   async listLogsForDate(
     businessId: string,
     stockDate: string,
-    locationId?: string,
+    locationId: string,
   ): Promise<WasteLog[]> {
     const start = new Date(`${stockDate}T00:00:00`);
     const end = new Date(`${stockDate}T23:59:59.999`);
 
-    let query = this.client
+    const { data, error } = await this.client
       .from("waste_logs")
       .select(WASTE_LOG_SELECT)
       .eq("business_id", businessId)
+      .eq("location_id", locationId)
       .gte("occurred_at", start.toISOString())
       .lte("occurred_at", end.toISOString())
       .order("occurred_at", { ascending: false });
-
-    if (locationId) {
-      query = query.eq("location_id", locationId);
-    }
-
-    const { data, error } = await query;
 
     if (error) throw error;
 
@@ -313,7 +308,11 @@ export class SupabaseWasteRepository implements WasteRepository {
     return ((data ?? []) as unknown as WasteLogRow[]).map(mapWasteLog);
   }
 
-  async getSummary(businessId: string, days = 7): Promise<WasteSummary> {
+  async getSummary(
+    businessId: string,
+    locationId: string,
+    days = 7,
+  ): Promise<WasteSummary> {
     const since = new Date();
     since.setDate(since.getDate() - days);
 
@@ -323,6 +322,7 @@ export class SupabaseWasteRepository implements WasteRepository {
         "quantity, total_cost_minor, business_products(name)",
       )
       .eq("business_id", businessId)
+      .eq("location_id", locationId)
       .gte("occurred_at", since.toISOString());
 
     if (error) throw error;
@@ -359,13 +359,18 @@ export class SupabaseWasteRepository implements WasteRepository {
     return { totalCostMinor, itemCount, topProducts };
   }
 
-  async getDailyTrend(businessId: string, days = 7): Promise<DailyWasteTrend[]> {
+  async getDailyTrend(
+    businessId: string,
+    locationId: string,
+    days = 7,
+  ): Promise<DailyWasteTrend[]> {
     const periodStart = startOfLocalDay(days - 1);
 
     const { data, error } = await this.client
       .from("waste_logs")
       .select("total_cost_minor, occurred_at")
       .eq("business_id", businessId)
+      .eq("location_id", locationId)
       .gte("occurred_at", periodStart.toISOString());
 
     if (error) throw error;
@@ -391,6 +396,7 @@ export class SupabaseWasteRepository implements WasteRepository {
 
   async getReasonBreakdown(
     businessId: string,
+    locationId: string,
     days = 7,
   ): Promise<WasteReasonBreakdown[]> {
     const since = new Date();
@@ -400,6 +406,7 @@ export class SupabaseWasteRepository implements WasteRepository {
       .from("waste_logs")
       .select("total_cost_minor, waste_reasons(label)")
       .eq("business_id", businessId)
+      .eq("location_id", locationId)
       .gte("occurred_at", since.toISOString());
 
     if (error) throw error;
@@ -426,6 +433,7 @@ export class SupabaseWasteRepository implements WasteRepository {
 
   async getPeriodComparison(
     businessId: string,
+    locationId: string,
     days = 7,
   ): Promise<WastePeriodComparison> {
     const currentSince = new Date();
@@ -438,6 +446,7 @@ export class SupabaseWasteRepository implements WasteRepository {
       .from("waste_logs")
       .select("total_cost_minor, occurred_at")
       .eq("business_id", businessId)
+      .eq("location_id", locationId)
       .gte("occurred_at", previousSince.toISOString());
 
     if (error) throw error;
@@ -474,6 +483,7 @@ export class SupabaseWasteRepository implements WasteRepository {
 
   async getOverviewAnalytics(
     businessId: string,
+    locationId: string,
     days = 7,
   ): Promise<OverviewAnalytics> {
     const periodStart = startOfLocalDay(days - 1);
@@ -488,6 +498,7 @@ export class SupabaseWasteRepository implements WasteRepository {
         "quantity, total_cost_minor, unit_co2e_g, occurred_at, business_products(name, sku, unit, unit_co2e_g, co2e_source, co2e_methodology), waste_reasons(label)",
       )
       .eq("business_id", businessId)
+      .eq("location_id", locationId)
       .gte("occurred_at", fetchSince.toISOString());
 
     if (error) throw error;

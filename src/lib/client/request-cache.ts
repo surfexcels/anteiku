@@ -89,3 +89,20 @@ export function invalidateCachedData(key: string) {
     sessionStorage.removeItem(key);
   }
 }
+
+export function invalidateCachedDataByPrefix(prefix: string) {
+  for (const key of [...memoryCache.keys()]) {
+    if (key.startsWith(prefix)) {
+      memoryCache.delete(key);
+    }
+  }
+
+  if (typeof window === "undefined") return;
+
+  for (let index = sessionStorage.length - 1; index >= 0; index -= 1) {
+    const key = sessionStorage.key(index);
+    if (key?.startsWith(prefix)) {
+      sessionStorage.removeItem(key);
+    }
+  }
+}

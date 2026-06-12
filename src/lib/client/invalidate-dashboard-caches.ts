@@ -6,7 +6,10 @@ import {
   sustainabilityBootstrapUrl,
   sustainabilityCacheKey,
 } from "@/src/lib/client/dashboard-cache-keys";
-import { invalidateCachedData } from "@/src/lib/client/request-cache";
+import {
+  invalidateCachedData,
+  invalidateCachedDataByPrefix,
+} from "@/src/lib/client/request-cache";
 import { prefetchDashboardBootstrap } from "@/src/lib/client/use-dashboard-bootstrap";
 
 function warmOverview() {
@@ -80,10 +83,6 @@ export function invalidateInventoryCaches(stockDate?: string) {
 
 export function invalidateWorkspaceCaches() {
   for (const key of Object.values(DASHBOARD_CACHE)) {
-    invalidateCachedData(key);
+    invalidateCachedDataByPrefix(key);
   }
-  invalidateCachedData(overviewCacheKey(7));
-  invalidateCachedData(overviewCacheKey(30));
-  invalidateCachedData(sustainabilityCacheKey(7));
-  invalidateCachedData(sustainabilityCacheKey(30));
 }

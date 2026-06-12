@@ -8,6 +8,7 @@ import {
   DASHBOARD_CACHE,
 } from "@/src/lib/client/dashboard-cache-keys";
 import { invalidateWasteCaches } from "@/src/lib/client/invalidate-dashboard-caches";
+import { notifyWorkspaceChanged } from "@/src/lib/client/workspace-events";
 import { formatMoney } from "@/src/lib/format-money";
 import { useDashboardBootstrap } from "@/src/lib/client/use-dashboard-bootstrap";
 import { WorkspaceLocationSwitcher } from "../workspace-location-switcher";
@@ -242,7 +243,7 @@ export function FloorPageClient({
           locations={data.locations}
           onChanged={async () => {
             await refresh();
-            router.refresh();
+            notifyWorkspaceChanged();
           }}
           variant="floor"
         />

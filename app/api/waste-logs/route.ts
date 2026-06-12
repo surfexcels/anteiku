@@ -3,6 +3,7 @@ import { getBusinessContext } from "@/src/lib/auth/get-business-context";
 import { verifyMutationRequest } from "@/src/lib/auth/verify-api-request";
 import { invalidateBusinessDashboardCache } from "@/src/lib/cache/invalidate-business-dashboard-cache";
 import { createWasteLogSchema } from "@/src/modules/waste/application/waste-schemas";
+import { SupabaseCatalogRepository } from "@/src/modules/catalog/infrastructure/supabase-catalog-repository";
 import { SupabaseWasteRepository } from "@/src/modules/waste/infrastructure/supabase-waste-repository";
 
 export async function GET() {
@@ -11,7 +12,10 @@ export async function GET() {
 
   try {
     const repository = new SupabaseWasteRepository(context.supabase);
-    const logs = await repository.listLogs(context.business.id);
+    const logs = await repository.listLogs(
+      context.business.id,
+      context.location.id,
+    );
     return NextResponse.json({ logs });
   } catch {
     return NextResponse.json({ error: "Could not load waste logs" }, { status: 500 });
@@ -34,6 +38,19 @@ export async function POST(request: Request) {
   }
 
   try {
+    const catalogRepository = new SupabaseCatalogRepository(context.supabase);
+    const allowed = await catalogRepository.isProductAtLocation(
+      context.business.id,
+      context.location.id,
+      parsed.data.businessProductId,
+    );
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "This product is not on your active site menu" },
+        { status: 400 },
+      );
+    }
+
     const repository = new SupabaseWasteRepository(context.supabase);
     const log = await repository.createLog({
       businessId: context.business.id,

@@ -66,6 +66,80 @@ export class SupabaseCatalogRepository implements CatalogRepository {
     return ((data ?? []) as BusinessProductRow[]).map(mapBusinessProduct);
   }
 
+  async listBusinessProductsForLocation(
+    businessId: string,
+    locationId: string,
+  ): Promise<BusinessProduct[]> {
+    const { data, error } = await this.client
+      .from("location_products")
+      .select(`business_products!inner(${PRODUCT_SELECT})`)
+      .eq("business_id", businessId)
+      .eq("location_id", locationId)
+      .order("business_product_id");
+
+    if (error) throw error;
+
+    return ((data ?? []) as Array<{
+      business_products: BusinessProductRow | BusinessProductRow[] | null;
+    }>)
+      .map((row) => {
+        const related = row.business_products;
+        const product = Array.isArray(related) ? related[0] ?? null : related;
+        return product ? mapBusinessProduct(product) : null;
+      })
+      .filter((product): product is BusinessProduct => Boolean(product?.isActive))
+      .sort((left, right) => left.name.localeCompare(right.name));
+  }
+
+  async assignProductToLocation(
+    businessId: string,
+    locationId: string,
+    productId: string,
+  ): Promise<void> {
+    const { error } = await this.client.from("location_products").upsert(
+      {
+        business_id: businessId,
+        location_id: locationId,
+        business_product_id: productId,
+      },
+      { onConflict: "location_id,business_product_id" },
+    );
+
+    if (error) throw error;
+  }
+
+  async isProductAtLocation(
+    businessId: string,
+    locationId: string,
+    productId: string,
+  ): Promise<boolean> {
+    const { data, error } = await this.client
+      .from("location_products")
+      .select("business_product_id")
+      .eq("business_id", businessId)
+      .eq("location_id", locationId)
+      .eq("business_product_id", productId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return Boolean(data);
+  }
+
+  private async getBusinessProductBySource(
+    businessId: string,
+    catalogSourceId: string,
+  ): Promise<BusinessProduct | null> {
+    const { data, error } = await this.client
+      .from("business_products")
+      .select(PRODUCT_SELECT)
+      .eq("business_id", businessId)
+      .eq("sku", catalogSourceId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data ? mapBusinessProduct(data as BusinessProductRow) : null;
+  }
+
   async hasBusinessProductWithSource(
     businessId: string,
     catalogSourceId: string,
@@ -84,12 +158,17 @@ export class SupabaseCatalogRepository implements CatalogRepository {
   async addBusinessProduct(
     input: AddBusinessProductInput,
   ): Promise<BusinessProduct> {
-    const alreadyAdded = await this.hasBusinessProductWithSource(
+    const existing = await this.getBusinessProductBySource(
       input.businessId,
       input.catalogSourceId,
     );
-    if (alreadyAdded) {
-      throw new Error("duplicate catalog source");
+    if (existing) {
+      await this.assignProductToLocation(
+        input.businessId,
+        input.locationId,
+        existing.id,
+      );
+      return existing;
     }
 
     const benchmark = benchmarkCo2eForCatalogSource(
@@ -118,7 +197,13 @@ export class SupabaseCatalogRepository implements CatalogRepository {
       .single();
 
     if (error) throw error;
-    return mapBusinessProduct(data as BusinessProductRow);
+    const product = mapBusinessProduct(data as BusinessProductRow);
+    await this.assignProductToLocation(
+      input.businessId,
+      input.locationId,
+      product.id,
+    );
+    return product;
   }
 
   async addCustomBusinessProduct(
@@ -147,7 +232,13 @@ export class SupabaseCatalogRepository implements CatalogRepository {
       .single();
 
     if (error) throw error;
-    return mapBusinessProduct(data as BusinessProductRow);
+    const product = mapBusinessProduct(data as BusinessProductRow);
+    await this.assignProductToLocation(
+      input.businessId,
+      input.locationId,
+      product.id,
+    );
+    return product;
   }
 
   async updateBusinessProduct(

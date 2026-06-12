@@ -26,6 +26,7 @@ export async function POST(request: Request) {
     const repository = new SupabaseCatalogRepository(context.supabase);
     const product = await repository.addBusinessProduct({
       businessId: context.business.id,
+      locationId: context.location.id,
       userId: context.userId,
       catalogSourceId: parsed.data.catalogSourceId,
       name: parsed.data.name,
@@ -36,11 +37,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ product }, { status: 201 });
-  } catch (error) {
-    const message =
-      error instanceof Error && error.message.includes("duplicate")
-        ? "This product is already in your menu"
-        : "Could not add product";
-    return NextResponse.json({ error: message }, { status: 409 });
+  } catch {
+    return NextResponse.json({ error: "Could not add product" }, { status: 500 });
   }
 }
