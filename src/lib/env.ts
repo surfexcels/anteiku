@@ -47,3 +47,39 @@ export function isOcrServiceConfigured() {
 export function getOcrServiceUrl() {
   return ocrServiceUrl.replace(/\/$/, "");
 }
+
+const superAdminEmails = process.env.ANTEIKU_SUPER_ADMIN_EMAILS ?? "";
+
+export function getSuperAdminEmails() {
+  return superAdminEmails
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+export function isSuperAdminEmail(email: string | null | undefined) {
+  if (!email) return false;
+  const allowlist = getSuperAdminEmails();
+  if (allowlist.length === 0) return false;
+  return allowlist.includes(email.trim().toLowerCase());
+}
+
+const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY;
+
+export function isServiceRoleConfigured() {
+  return Boolean(supabaseSecretKey?.trim());
+}
+
+export function getServiceRoleEnv() {
+  if (!supabaseSecretKey?.trim()) {
+    throw new Error(
+      "SUPABASE_SECRET_KEY is not configured. Required for platform admin operations.",
+    );
+  }
+
+  const { url } = getPublicSupabaseEnv();
+  return {
+    url,
+    secretKey: supabaseSecretKey.trim(),
+  };
+}

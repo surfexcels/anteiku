@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   CreateBatchWasteLogsInput,
   CreateWasteLogInput,
+  WasteLogRecord,
   WasteRepository,
 } from "@/src/modules/waste/application/waste-repository";
 import {
@@ -40,6 +41,8 @@ interface WasteProductRelation {
 interface WasteLogRow {
   id: string;
   business_product_id: string;
+  location_id: string;
+  created_by: string;
   waste_reason_id: string | null;
   quantity: number;
   unit_cost_minor: number;
@@ -54,7 +57,7 @@ interface WasteLogRow {
 }
 
 const WASTE_LOG_SELECT =
-  "id, business_product_id, waste_reason_id, quantity, unit_cost_minor, total_cost_minor, unit_co2e_g, total_co2e_g, currency_code, occurred_at, note, business_products(name), waste_reasons(label)";
+  "id, business_product_id, location_id, created_by, waste_reason_id, quantity, unit_cost_minor, total_cost_minor, unit_co2e_g, total_co2e_g, currency_code, occurred_at, note, business_products(name, sku, unit, unit_co2e_g, co2e_source, co2e_methodology), waste_reasons(label)";
 
 const PRODUCT_SNAPSHOT_SELECT =
   "id, name, unit_cost_minor, currency_code, sku, unit, unit_co2e_g, co2e_source, co2e_methodology";
@@ -143,11 +146,15 @@ export class SupabaseWasteRepository implements WasteRepository {
     return ((data ?? []) as unknown as WasteLogRow[]).map(mapWasteLog);
   }
 
-  async listLogsForDate(businessId: string, stockDate: string): Promise<WasteLog[]> {
+  async listLogsForDate(
+    businessId: string,
+    stockDate: string,
+    locationId?: string,
+  ): Promise<WasteLog[]> {
     const start = new Date(`${stockDate}T00:00:00`);
     const end = new Date(`${stockDate}T23:59:59.999`);
 
-    const { data, error } = await this.client
+    let query = this.client
       .from("waste_logs")
       .select(WASTE_LOG_SELECT)
       .eq("business_id", businessId)
@@ -155,11 +162,41 @@ export class SupabaseWasteRepository implements WasteRepository {
       .lte("occurred_at", end.toISOString())
       .order("occurred_at", { ascending: false });
 
+    if (locationId) {
+      query = query.eq("location_id", locationId);
+    }
+
+    const { data, error } = await query;
+
     if (error) throw error;
 
     return ((data ?? []) as unknown as WasteLogRow[])
       .filter((row) => localDateKey(new Date(row.occurred_at)) === stockDate)
       .map(mapWasteLog);
+  }
+
+  async getLog(businessId: string, logId: string): Promise<WasteLogRecord | null> {
+    const { data, error } = await this.client
+      .from("waste_logs")
+      .select(WASTE_LOG_SELECT)
+      .eq("business_id", businessId)
+      .eq("id", logId)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return null;
+
+    return mapWasteLogRecord(data as unknown as WasteLogRow);
+  }
+
+  async deleteLog(businessId: string, logId: string): Promise<void> {
+    const { error } = await this.client
+      .from("waste_logs")
+      .delete()
+      .eq("business_id", businessId)
+      .eq("id", logId);
+
+    if (error) throw error;
   }
 
   async createLog(input: CreateWasteLogInput): Promise<WasteLog> {
@@ -580,6 +617,10 @@ export class SupabaseWasteRepository implements WasteRepository {
 }
 
 function mapWasteLog(row: WasteLogRow): WasteLog {
+  return mapWasteLogRecord(row);
+}
+
+function mapWasteLogRecord(row: WasteLogRow): WasteLogRecord {
   const totalCo2eG =
     row.total_co2e_g ??
     co2eForLogRow({
@@ -602,5 +643,7 @@ function mapWasteLog(row: WasteLogRow): WasteLog {
     currencyCode: row.currency_code,
     occurredAt: row.occurred_at,
     note: row.note,
+    createdBy: row.created_by,
+    locationId: row.location_id,
   };
 }

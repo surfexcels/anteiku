@@ -136,7 +136,7 @@ export function ReportsPanel({
               </div>
             </div>
 
-            <div className="inline-fields report-date-fields">
+            <div className="report-date-fields">
               <label>
                 From
                 <input

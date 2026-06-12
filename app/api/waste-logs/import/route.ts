@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getBusinessContext } from "@/src/lib/auth/get-business-context";
+import { requireCapability } from "@/src/lib/auth/require-capability";
+import { verifyMutationRequest } from "@/src/lib/auth/verify-api-request";
 import { invalidateBusinessDashboardCache } from "@/src/lib/cache/invalidate-business-dashboard-cache";
 import { SupabaseCatalogRepository } from "@/src/modules/catalog/infrastructure/supabase-catalog-repository";
 import {
@@ -12,7 +13,10 @@ import { SupabaseWasteRepository } from "@/src/modules/waste/infrastructure/supa
 const MAX_FILE_BYTES = 2 * 1024 * 1024;
 
 export async function POST(request: Request) {
-  const context = await getBusinessContext();
+  const blocked = verifyMutationRequest(request);
+  if (blocked) return blocked;
+
+  const context = await requireCapability("manageCatalog");
   if ("error" in context) return context.error;
 
   const form = await request.formData();

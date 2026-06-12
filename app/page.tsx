@@ -233,15 +233,33 @@ export default function Home() {
       <header className="site-header">
         <Logo />
         <nav className={menuOpen ? "site-nav open" : "site-nav"}>
-          <a href="#product">Product</a>
-          <a href="#how">How it works</a>
-          <a href="#pricing">Pricing</a>
-          <a href="#faq">FAQ</a>
+          <a href="#product" onClick={() => setMenuOpen(false)}>Product</a>
+          <a href="#how" onClick={() => setMenuOpen(false)}>How it works</a>
+          <a href="#pricing" onClick={() => setMenuOpen(false)}>Pricing</a>
+          <a href="#faq" onClick={() => setMenuOpen(false)}>FAQ</a>
+          <div className="site-nav-auth">
+            <a className="login-link" href="/login" onClick={() => setMenuOpen(false)}>
+              Log in
+            </a>
+            <a
+              className="button primary nav-cta"
+              href="/login"
+              onClick={() => setMenuOpen(false)}
+            >
+              Get started
+            </a>
+          </div>
         </nav>
         <div className="nav-actions">
-          <a className="login-link" href="/login">Log in</a>
-          <a className="button primary nav-cta" href="#calculator">Calculate my losses</a>
-          <button className="menu-button" aria-label="Toggle menu" onClick={() => setMenuOpen(!menuOpen)}>
+          <a className="login-link login-link-desktop" href="/login">Log in</a>
+          <a className="button primary nav-cta nav-cta-desktop" href="/login">Get started</a>
+          <button
+            aria-expanded={menuOpen}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            className="menu-button"
+            onClick={() => setMenuOpen(!menuOpen)}
+            type="button"
+          >
             <Icon name={menuOpen ? "plus" : "menu"} />
           </button>
         </div>

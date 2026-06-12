@@ -28,10 +28,18 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const userId = data?.claims?.sub;
   const pathname = request.nextUrl.pathname;
-  const isProtected =
-    pathname.startsWith("/dashboard") || pathname.startsWith("/onboarding");
+  const isProtectedPage =
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/onboarding") ||
+    pathname.startsWith("/internal");
 
-  if (!userId && isProtected) {
+  const isProtectedApi =
+    pathname.startsWith("/api/") && pathname !== "/api/catalog/thumbnail";
+
+  if (!userId && (isProtectedPage || isProtectedApi)) {
+    if (isProtectedApi) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
     loginUrl.searchParams.set("next", pathname);

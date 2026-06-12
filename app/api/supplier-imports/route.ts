@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { getBusinessContext } from "@/src/lib/auth/get-business-context";
+import { requireCapability } from "@/src/lib/auth/require-capability";
+import { verifyMutationRequest } from "@/src/lib/auth/verify-api-request";
+import { sanitizeFilename } from "@/src/lib/security/sanitize-filename";
 import { createSupplierImportSchema } from "@/src/modules/imports/application/import-schemas";
 import { processSupplierImport } from "@/src/modules/imports/application/process-supplier-import";
 import { SupabaseCatalogRepository } from "@/src/modules/catalog/infrastructure/supabase-catalog-repository";
@@ -21,7 +24,10 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const context = await getBusinessContext();
+  const blocked = verifyMutationRequest(request);
+  if (blocked) return blocked;
+
+  const context = await requireCapability("manageCatalog");
   if ("error" in context) return context.error;
 
   const contentType = request.headers.get("content-type") ?? "";
@@ -42,7 +48,8 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "File must be 10 MB or smaller" }, { status: 400 });
       }
 
-      const storagePath = `imports/${context.business.id}/${Date.now()}-${file.name}`;
+      const safeName = sanitizeFilename(file.name);
+      const storagePath = `imports/${context.business.id}/${Date.now()}-${safeName}`;
       const { error: uploadError } = await context.supabase.storage
         .from("supplier-imports")
         .upload(storagePath, file, { upsert: false, contentType: file.type || undefined });
@@ -82,7 +89,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid filename" }, { status: 400 });
     }
 
-    const storagePath = `imports/${context.business.id}/${Date.now()}-${parsed.data.originalFilename}`;
+    const safeName = sanitizeFilename(parsed.data.originalFilename);
+    const storagePath = `imports/${context.business.id}/${Date.now()}-${safeName}`;
     const record = await repository.create({
       businessId: context.business.id,
       userId: context.userId,

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getBusinessContext } from "@/src/lib/auth/get-business-context";
+import { requireCapability } from "@/src/lib/auth/require-capability";
+import { verifyMutationRequest } from "@/src/lib/auth/verify-api-request";
 import {
   addCustomBusinessProductSchema,
   moneyToMinorUnits,
@@ -7,7 +8,10 @@ import {
 import { SupabaseCatalogRepository } from "@/src/modules/catalog/infrastructure/supabase-catalog-repository";
 
 export async function POST(request: Request) {
-  const context = await getBusinessContext();
+  const blocked = verifyMutationRequest(request);
+  if (blocked) return blocked;
+
+  const context = await requireCapability("manageCatalog");
   if ("error" in context) return context.error;
 
   const parsed = addCustomBusinessProductSchema.safeParse(await request.json());

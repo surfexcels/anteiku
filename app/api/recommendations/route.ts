@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { getBusinessContext } from "@/src/lib/auth/get-business-context";
+import { requireCapability } from "@/src/lib/auth/require-capability";
+import { verifyMutationRequest } from "@/src/lib/auth/verify-api-request";
 import { generateRecommendation } from "@/src/modules/recommendations/application/generate-recommendation";
 import { SupabaseRecommendationRepository } from "@/src/modules/recommendations/infrastructure/supabase-recommendation-repository";
 import { SupabaseWasteRepository } from "@/src/modules/waste/infrastructure/supabase-waste-repository";
@@ -20,8 +22,11 @@ export async function GET() {
   }
 }
 
-export async function POST() {
-  const context = await getBusinessContext();
+export async function POST(request: Request) {
+  const blocked = verifyMutationRequest(request);
+  if (blocked) return blocked;
+
+  const context = await requireCapability("manageCatalog");
   if ("error" in context) return context.error;
 
   try {

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { getBusinessContext } from "@/src/lib/auth/get-business-context";
+import { requireCapability } from "@/src/lib/auth/require-capability";
 import { exportWasteCsv } from "@/src/modules/waste/application/export-waste-csv";
 import { SupabaseWasteRepository } from "@/src/modules/waste/infrastructure/supabase-waste-repository";
 
 export async function GET(request: Request) {
-  const context = await getBusinessContext();
+  const context = await requireCapability("exportData");
   if ("error" in context) return context.error;
 
   const { searchParams } = new URL(request.url);

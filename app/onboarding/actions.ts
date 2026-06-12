@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireUser } from "@/src/lib/auth/require-user";
+import { SupabaseBusinessRepository } from "@/src/modules/business/infrastructure/supabase-business-repository";
 
 const onboardingSchema = z.object({
   name: z.string().trim().min(2).max(120),
@@ -19,7 +20,14 @@ export async function createBusiness(formData: FormData) {
     timezone: formData.get("timezone"),
   });
 
-  const { supabase } = await requireUser();
+  const { supabase, userId } = await requireUser();
+  const businessRepository = new SupabaseBusinessRepository(supabase);
+  const existingBusiness = await businessRepository.getCurrentForUser(userId);
+
+  if (existingBusiness) {
+    redirect("/dashboard");
+  }
+
   const { error } = await supabase.rpc("create_business_with_owner", {
     business_name: input.name,
     business_country_code: input.countryCode,
@@ -31,5 +39,5 @@ export async function createBusiness(formData: FormData) {
     throw new Error(`Could not create business: ${error.message}`);
   }
 
-  redirect("/dashboard/products");
+  redirect("/dashboard");
 }

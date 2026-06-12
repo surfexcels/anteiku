@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { getBusinessContext } from "@/src/lib/auth/get-business-context";
+import { requireCapability } from "@/src/lib/auth/require-capability";
+import { verifyMutationRequest } from "@/src/lib/auth/verify-api-request";
 import { createReportSchema } from "@/src/modules/reports/application/report-schemas";
 import { SupabaseReportRepository } from "@/src/modules/reports/infrastructure/supabase-report-repository";
 
@@ -17,7 +19,10 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const context = await getBusinessContext();
+  const blocked = verifyMutationRequest(request);
+  if (blocked) return blocked;
+
+  const context = await requireCapability("exportData");
   if ("error" in context) return context.error;
 
   const parsed = createReportSchema.safeParse(await request.json());

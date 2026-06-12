@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { hydrateCachedData } from "@/src/lib/client/request-cache";
 import {
   bootstrapUrlForPath,
+  DASHBOARD_BOOTSTRAP_URL,
   DASHBOARD_CACHE,
   overviewCacheKey,
   sustainabilityCacheKey,
@@ -22,6 +24,7 @@ function cacheKeyForPath(pathname: string) {
   if (pathname.startsWith("/dashboard/inventory")) return DASHBOARD_CACHE.inventory;
   if (pathname.startsWith("/dashboard/sustainability")) return sustainabilityCacheKey(7);
   if (pathname.startsWith("/dashboard/floor")) return DASHBOARD_CACHE.floor;
+  if (pathname.startsWith("/dashboard/settings")) return DASHBOARD_CACHE.settings;
   return null;
 }
 
@@ -41,12 +44,18 @@ const trackLinks: NavLink[] = [
   { href: "/dashboard/sustainability", label: "Carbon", icon: "carbon" },
 ];
 
-const manageLinks: NavLink[] = [
+const baseManageLinks: NavLink[] = [
   { href: "/dashboard/products", label: "Products", icon: "products" },
   { href: "/dashboard/insights", label: "Insights", icon: "insights" },
   { href: "/dashboard/reports", label: "Reports", icon: "reports" },
   { href: "/dashboard/imports", label: "Imports", icon: "imports" },
 ];
+
+const settingsLink: NavLink = {
+  href: "/dashboard/settings",
+  label: "Settings",
+  icon: "settings",
+};
 
 function isActive(pathname: string, link: NavLink) {
   if (link.exact) return pathname === link.href;
@@ -94,9 +103,49 @@ function NavSection({
   );
 }
 
-export function DashboardNav() {
+interface BusinessNavContext {
+  permissions?: {
+    canManageSettings?: boolean;
+  };
+}
+
+export function DashboardNav({
+  open,
+  onOpenChange,
+  signOutAction,
+  isPlatformAdmin = false,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  signOutAction: () => Promise<void>;
+  isPlatformAdmin?: boolean;
+}) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  const [canManageSettings, setCanManageSettings] = useState(
+    () =>
+      hydrateCachedData<BusinessNavContext>(DASHBOARD_CACHE.business)?.permissions
+        ?.canManageSettings ?? false,
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(DASHBOARD_BOOTSTRAP_URL.business)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((payload: BusinessNavContext | null) => {
+        if (!cancelled && payload?.permissions) {
+          setCanManageSettings(Boolean(payload.permissions.canManageSettings));
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const manageLinks = canManageSettings
+    ? [...baseManageLinks, settingsLink]
+    : baseManageLinks;
 
   function warmRoute(href: string) {
     const bootstrapUrl = bootstrapUrlForPath(href);
@@ -107,16 +156,16 @@ export function DashboardNav() {
   }
 
   function closeMenu() {
-    setOpen(false);
+    onOpenChange(false);
   }
 
   return (
     <>
       <button
         aria-expanded={open}
-        aria-label="Open menu"
+        aria-label={open ? "Close menu" : "Open menu"}
         className="app-menu-toggle"
-        onClick={() => setOpen((current) => !current)}
+        onClick={() => onOpenChange(!open)}
         type="button"
       >
         <span />
@@ -139,16 +188,28 @@ export function DashboardNav() {
           pathname={pathname}
           warmRoute={warmRoute}
         />
+        <div className="app-nav-mobile-foot">
+          {isPlatformAdmin ? (
+            <Link className="app-platform-link" href="/internal" onClick={closeMenu}>
+              Platform console
+            </Link>
+          ) : null}
+          <form action={signOutAction}>
+            <button className="app-signout app-signout-mobile" type="submit">
+              Sign out
+            </button>
+          </form>
+        </div>
       </nav>
 
-      {open && (
+      {open ? (
         <button
           aria-label="Close menu"
           className="app-nav-backdrop"
           onClick={closeMenu}
           type="button"
         />
-      )}
+      ) : null}
     </>
   );
 }

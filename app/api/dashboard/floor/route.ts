@@ -28,7 +28,11 @@ export async function GET() {
         context.location.id,
         stockDate,
       ),
-      wasteRepository.listLogsForDate(context.business.id, stockDate),
+      wasteRepository.listLogsForDate(
+        context.business.id,
+        stockDate,
+        context.location.id,
+      ),
     ]);
 
     const activeProducts = products
@@ -48,6 +52,8 @@ export async function GET() {
       0,
     );
 
+    const totalQuantity = wasteLogs.reduce((sum, log) => sum + log.quantity, 0);
+
     return NextResponse.json({
       stockDate,
       businessName: context.business.name,
@@ -60,13 +66,22 @@ export async function GET() {
             id: inventoryDay.id,
             status: inventoryDay.status,
             lineCount: inventoryDay.lines.length,
+            productCount: activeProducts.length,
           }
         : null,
       wasteToday: {
         count: wasteLogs.length,
+        totalQuantity,
         totalCostMinor,
         byProduct: Object.fromEntries(wasteByProduct),
       },
+      recentLogs: wasteLogs.slice(0, 6).map((log) => ({
+        id: log.id,
+        productName: log.productName,
+        quantity: log.quantity,
+        totalCostMinor: log.totalCostMinor,
+        occurredAt: log.occurredAt,
+      })),
       products: activeProducts.map((product) => ({
         id: product.id,
         name: product.name,

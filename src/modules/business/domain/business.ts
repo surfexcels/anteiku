@@ -14,3 +14,19 @@ export interface BusinessLocation {
   id: string;
   name: string;
 }
+
+export interface BusinessLocationDetail extends BusinessLocation {
+  countryCode: string;
+  timezone: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface BusinessMember {
+  id: string;
+  userId: string;
+  fullName: string | null;
+  role: MembershipRole;
+  isActive: boolean;
+  createdAt: string;
+}

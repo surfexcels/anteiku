@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getBusinessContext } from "@/src/lib/auth/get-business-context";
+import { requireCapability } from "@/src/lib/auth/require-capability";
 import { exportReportCsv } from "@/src/modules/reports/application/export-report-csv";
 import { SupabaseReportRepository } from "@/src/modules/reports/infrastructure/supabase-report-repository";
 
@@ -7,7 +7,7 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const context = await getBusinessContext();
+  const context = await requireCapability("exportData");
   if ("error" in context) return context.error;
 
   const { id } = await params;

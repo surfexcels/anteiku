@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { safeClientRedirect } from "@/src/lib/auth/safe-redirect";
 import { createClient } from "@/src/lib/supabase/client";
 
 type AuthMode = "sign-in" | "sign-up";
@@ -47,7 +48,8 @@ export function LoginForm() {
       return;
     }
 
-    window.location.assign("/dashboard/products");
+    const next = new URLSearchParams(window.location.search).get("next");
+    safeClientRedirect(next);
   }
 
   return (

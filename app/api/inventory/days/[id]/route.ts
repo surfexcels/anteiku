@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getBusinessContext } from "@/src/lib/auth/get-business-context";
+import { requireCapability } from "@/src/lib/auth/require-capability";
+import { verifyMutationRequest } from "@/src/lib/auth/verify-api-request";
 import {
   closeInventoryDaySchema,
   updateOpeningSchema,
@@ -42,8 +44,8 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const context = await getBusinessContext();
-  if ("error" in context) return context.error;
+  const blocked = verifyMutationRequest(request);
+  if (blocked) return blocked;
 
   const { id } = await params;
   const body = await request.json();
@@ -57,6 +59,11 @@ export async function PATCH(
       { status: 400 },
     );
   }
+
+  const context = await requireCapability(
+    parsed.data.action === "close" ? "closeInventory" : "editOpeningStock",
+  );
+  if ("error" in context) return context.error;
 
   try {
     const repository = new SupabaseInventoryRepository(context.supabase);

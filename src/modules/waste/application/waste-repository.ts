@@ -37,10 +37,21 @@ export interface CreateBatchWasteLogsInput {
   source?: "manual" | "import";
 }
 
+export interface WasteLogRecord extends WasteLog {
+  createdBy: string;
+  locationId: string;
+}
+
 export interface WasteRepository {
   listReasons(businessId: string): Promise<WasteReason[]>;
   listLogs(businessId: string, limit?: number): Promise<WasteLog[]>;
-  listLogsForDate(businessId: string, stockDate: string): Promise<WasteLog[]>;
+  listLogsForDate(
+    businessId: string,
+    stockDate: string,
+    locationId?: string,
+  ): Promise<WasteLog[]>;
+  getLog(businessId: string, logId: string): Promise<WasteLogRecord | null>;
+  deleteLog(businessId: string, logId: string): Promise<void>;
   listLogsForExport(businessId: string, days: number): Promise<WasteLog[]>;
   createLog(input: CreateWasteLogInput): Promise<WasteLog>;
   createLogsBatch(input: CreateBatchWasteLogsInput): Promise<WasteLog[]>;

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getBusinessContext } from "@/src/lib/auth/get-business-context";
+import { verifyMutationRequest } from "@/src/lib/auth/verify-api-request";
 import {
   WORKSPACE_COOKIE_MAX_AGE,
   WORKSPACE_LOCATION_COOKIE,
@@ -12,6 +13,9 @@ const patchSchema = z.object({
 });
 
 export async function PATCH(request: Request) {
+  const blocked = verifyMutationRequest(request);
+  if (blocked) return blocked;
+
   const context = await getBusinessContext();
   if ("error" in context) return context.error;
 

@@ -8,6 +8,7 @@ export type DashboardIconName =
   | "imports"
   | "inventory"
   | "floor"
+  | "settings"
   | "clipboard"
   | "upload";
 
@@ -102,6 +103,13 @@ export function DashboardIcon({ name, size = 18, className }: IconProps) {
           <rect height="16" rx="2" width="12" x="6" y="4" />
           <path d="M9 9h6M9 13h4" />
           <path d="M4 20h16" />
+        </svg>
+      );
+    case "settings":
+      return (
+        <svg {...props}>
+          <circle cx="12" cy="12" r="3" />
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
         </svg>
       );
     case "clipboard":

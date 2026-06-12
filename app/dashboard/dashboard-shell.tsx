@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
@@ -16,6 +17,7 @@ import {
 } from "@/src/lib/client/request-cache";
 import { prefetchDashboardBootstrap } from "@/src/lib/client/use-dashboard-bootstrap";
 import { AnteikuLogo } from "@/app/components/anteiku-logo";
+import { DashboardMobileBar } from "./dashboard-mobile-bar";
 import { DashboardNav } from "./dashboard-nav";
 import { WorkspaceLocationSwitcher } from "./workspace-location-switcher";
 
@@ -35,10 +37,12 @@ interface BusinessContext {
     id: string;
     name: string;
   }>;
+  isPlatformAdmin?: boolean;
 }
 
 const PRIORITY_WARM_ROUTES: Array<{ cacheKey: string; url: string }> = [
   { cacheKey: overviewCacheKey(7), url: DASHBOARD_BOOTSTRAP_URL.overview },
+  { cacheKey: DASHBOARD_CACHE.floor, url: DASHBOARD_BOOTSTRAP_URL.floor },
   { cacheKey: DASHBOARD_CACHE.products, url: DASHBOARD_BOOTSTRAP_URL.products },
   { cacheKey: DASHBOARD_CACHE.waste, url: DASHBOARD_BOOTSTRAP_URL.waste },
   { cacheKey: DASHBOARD_CACHE.inventory, url: DASHBOARD_BOOTSTRAP_URL.inventory },
@@ -61,6 +65,7 @@ export function DashboardShell({
   const router = useRouter();
   const pathname = usePathname();
   const isFloorMode = pathname.startsWith("/dashboard/floor");
+  const [navOpen, setNavOpen] = useState(false);
   const [workspace, setWorkspace] = useState<BusinessContext | null>(() => {
     const cached = hydrateCachedData<BusinessContext>(DASHBOARD_CACHE.business);
     if (!cached?.business || !cached.location || !cached.locations) {
@@ -120,6 +125,10 @@ export function DashboardShell({
     };
   }, [router]);
 
+  useEffect(() => {
+    setNavOpen(false);
+  }, [pathname]);
+
   if (isFloorMode) {
     return <div className="floor-shell">{children}</div>;
   }
@@ -128,7 +137,12 @@ export function DashboardShell({
     <div className="app-shell">
       <aside className="app-sidebar">
         <AnteikuLogo href="/dashboard" size="sm" variant="sidebar" />
-        <DashboardNav />
+        <DashboardNav
+          isPlatformAdmin={Boolean(workspace?.isPlatformAdmin)}
+          onOpenChange={setNavOpen}
+          open={navOpen}
+          signOutAction={signOutAction}
+        />
         <div className="app-sidebar-foot">
           {workspace?.locations && workspace.locations.length > 1 ? (
             <WorkspaceLocationSwitcher
@@ -152,6 +166,11 @@ export function DashboardShell({
               </small>
             </div>
           </div>
+          {workspace?.isPlatformAdmin ? (
+            <Link className="app-platform-link" href="/internal">
+              Platform console
+            </Link>
+          ) : null}
           <form action={signOutAction}>
             <button className="app-signout" type="submit">
               Sign out
@@ -180,7 +199,8 @@ export function DashboardShell({
           onLocationChanged={refreshWorkspaceAfterLocationChange}
           workspace={workspace}
         />
-        {children}
+        <div className="app-content-body">{children}</div>
+        <DashboardMobileBar onOpenMenu={() => setNavOpen(true)} />
       </div>
     </div>
   );

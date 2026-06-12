@@ -9,6 +9,7 @@ export const DASHBOARD_CACHE = {
   inventory: "dashboard-inventory",
   sustainability: "dashboard-sustainability",
   floor: "dashboard-floor",
+  settings: "dashboard-settings",
 } as const;
 
 export function overviewCacheKey(days = 7) {
@@ -38,6 +39,7 @@ export const DASHBOARD_BOOTSTRAP_URL = {
   inventory: "/api/dashboard/inventory",
   sustainability: sustainabilityBootstrapUrl(7),
   floor: "/api/dashboard/floor",
+  settings: "/api/settings/bootstrap",
 } as const;
 
 export function inventoryCacheKey(date?: string) {
@@ -79,6 +81,9 @@ export function bootstrapUrlForPath(pathname: string) {
   }
   if (pathname.startsWith("/dashboard/floor")) {
     return DASHBOARD_BOOTSTRAP_URL.floor;
+  }
+  if (pathname.startsWith("/dashboard/settings")) {
+    return DASHBOARD_BOOTSTRAP_URL.settings;
   }
   return null;
 }

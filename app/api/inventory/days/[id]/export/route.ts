@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getBusinessContext } from "@/src/lib/auth/get-business-context";
+import { requireCapability } from "@/src/lib/auth/require-capability";
 import { exportInventoryCsv } from "@/src/modules/inventory/application/export-inventory-csv";
 import { exportInventoryXls } from "@/src/modules/inventory/application/export-inventory-xls";
 import { SupabaseInventoryRepository } from "@/src/modules/inventory/infrastructure/supabase-inventory-repository";
@@ -8,7 +8,7 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const context = await getBusinessContext();
+  const context = await requireCapability("exportData");
   if ("error" in context) return context.error;
 
   const { id } = await params;

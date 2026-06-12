@@ -2,6 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { BusinessRepository } from "@/src/modules/business/application/business-repository";
 import type {
   BusinessLocation,
+  BusinessLocationDetail,
+  BusinessMember,
   CurrentBusiness,
   MembershipRole,
 } from "@/src/modules/business/domain/business";
@@ -77,16 +79,138 @@ export class SupabaseBusinessRepository implements BusinessRepository {
   }
 
   async listLocations(businessId: string): Promise<BusinessLocation[]> {
+    const locations = await this.listLocationDetails(businessId);
+    return locations
+      .filter((location) => location.isActive)
+      .map((location) => ({ id: location.id, name: location.name }));
+  }
+
+  async listLocationDetails(businessId: string): Promise<BusinessLocationDetail[]> {
     const { data, error } = await this.client
       .from("locations")
-      .select("id, name")
+      .select("id, name, country_code, timezone, is_active, created_at")
       .eq("business_id", businessId)
-      .eq("is_active", true)
       .order("created_at", { ascending: true });
 
     if (error) throw error;
 
-    return (data ?? []).map((row) => ({ id: row.id, name: row.name }));
+    return (data ?? []).map((row) => ({
+      id: row.id,
+      name: row.name,
+      countryCode: row.country_code,
+      timezone: row.timezone,
+      isActive: row.is_active,
+      createdAt: row.created_at,
+    }));
+  }
+
+  async createLocation(input: {
+    businessId: string;
+    name: string;
+    countryCode: string;
+    timezone: string;
+  }): Promise<BusinessLocationDetail> {
+    const { data, error } = await this.client
+      .from("locations")
+      .insert({
+        business_id: input.businessId,
+        name: input.name,
+        country_code: input.countryCode,
+        timezone: input.timezone,
+      })
+      .select("id, name, country_code, timezone, is_active, created_at")
+      .single();
+
+    if (error) throw error;
+
+    return {
+      id: data.id,
+      name: data.name,
+      countryCode: data.country_code,
+      timezone: data.timezone,
+      isActive: data.is_active,
+      createdAt: data.created_at,
+    };
+  }
+
+  async updateLocation(input: {
+    businessId: string;
+    locationId: string;
+    name?: string;
+    isActive?: boolean;
+  }): Promise<BusinessLocationDetail> {
+    const patch: Record<string, string | boolean> = {};
+    if (input.name !== undefined) patch.name = input.name;
+    if (input.isActive !== undefined) patch.is_active = input.isActive;
+
+    const { data, error } = await this.client
+      .from("locations")
+      .update(patch)
+      .eq("business_id", input.businessId)
+      .eq("id", input.locationId)
+      .select("id, name, country_code, timezone, is_active, created_at")
+      .single();
+
+    if (error) throw error;
+
+    return {
+      id: data.id,
+      name: data.name,
+      countryCode: data.country_code,
+      timezone: data.timezone,
+      isActive: data.is_active,
+      createdAt: data.created_at,
+    };
+  }
+
+  async countActiveLocations(businessId: string): Promise<number> {
+    const { count, error } = await this.client
+      .from("locations")
+      .select("id", { count: "exact", head: true })
+      .eq("business_id", businessId)
+      .eq("is_active", true);
+
+    if (error) throw error;
+    return count ?? 0;
+  }
+
+  async listMembers(businessId: string): Promise<BusinessMember[]> {
+    const { data: memberships, error } = await this.client
+      .from("business_memberships")
+      .select("id, user_id, role, is_active, created_at")
+      .eq("business_id", businessId)
+      .order("created_at", { ascending: true });
+
+    if (error) throw error;
+    if (!memberships?.length) return [];
+
+    const userIds = memberships.map((row) => row.user_id);
+    const { data: profiles } = await this.client
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", userIds);
+
+    const nameByUserId = new Map(
+      (profiles ?? []).map((profile) => [profile.id, profile.full_name]),
+    );
+
+    return memberships.map((row) => ({
+      id: row.id,
+      userId: row.user_id,
+      fullName: nameByUserId.get(row.user_id) ?? null,
+      role: row.role as MembershipRole,
+      isActive: row.is_active,
+      createdAt: row.created_at,
+    }));
+  }
+
+  async updateBusinessName(businessId: string, name: string): Promise<void> {
+    const { error } = await this.client
+      .from("businesses")
+      .update({ name })
+      .eq("id", businessId);
+
+    if (error) throw error;
   }
 
   async getActiveLocationPreference(

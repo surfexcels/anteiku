@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { dashboardFetch } from "@/src/lib/client/dashboard-fetch";
 import {
   getCacheAgeMs,
@@ -10,26 +10,42 @@ import {
 } from "@/src/lib/client/request-cache";
 
 const DASHBOARD_CACHE_TTL_MS = 5 * 60_000;
-const DASHBOARD_STALE_MS = 90_000;
+const DASHBOARD_STALE_MS = 5 * 60_000;
 
 export function useDashboardBootstrap<T>(cacheKey: string, url: string) {
-  const [data, setData] = useState<T | null>(() => hydrateCachedData<T>(cacheKey));
+  const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState("");
-  const isLoading = !data && !error;
+  const [ready, setReady] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useLayoutEffect(() => {
+    const cached = hydrateCachedData<T>(cacheKey);
+    if (cached) {
+      setData(cached);
+    }
+    setReady(true);
+  }, [cacheKey]);
 
   useEffect(() => {
     let cancelled = false;
 
     async function load(background = false) {
+      if (background) {
+        setIsRefreshing(true);
+      }
+
       try {
         const payload = await dashboardFetch<T>(url, cacheKey, DASHBOARD_CACHE_TTL_MS);
         if (cancelled) return;
         setData(payload);
         setError("");
-        if (!background) return;
       } catch {
         if (!cancelled && !background) {
           setError("Could not load this page. Refresh to try again.");
+        }
+      } finally {
+        if (!cancelled && background) {
+          setIsRefreshing(false);
         }
       }
     }
@@ -37,13 +53,10 @@ export function useDashboardBootstrap<T>(cacheKey: string, url: string) {
     const cached = hydrateCachedData<T>(cacheKey);
     const cacheAge = getCacheAgeMs(cacheKey);
 
-    if (cached) {
-      setData(cached);
-      if (cacheAge === null || cacheAge > DASHBOARD_STALE_MS) {
-        void load(true);
-      }
-    } else {
+    if (!cached) {
       void load(false);
+    } else if (cacheAge === null || cacheAge > DASHBOARD_STALE_MS) {
+      void load(true);
     }
 
     return () => {
@@ -53,6 +66,7 @@ export function useDashboardBootstrap<T>(cacheKey: string, url: string) {
 
   async function refresh(): Promise<T | null> {
     invalidateCachedData(cacheKey);
+    setIsRefreshing(true);
     try {
       const payload = await dashboardFetch<T>(url, cacheKey, DASHBOARD_CACHE_TTL_MS);
       setData(payload);
@@ -61,10 +75,14 @@ export function useDashboardBootstrap<T>(cacheKey: string, url: string) {
     } catch {
       setError("Could not load this page. Refresh to try again.");
       return null;
+    } finally {
+      setIsRefreshing(false);
     }
   }
 
-  return { data, error, isLoading, refresh };
+  const isLoading = ready ? !data && !error : true;
+
+  return { data, error, isLoading, isRefreshing, refresh };
 }
 
 export function prefetchDashboardBootstrap(url: string, cacheKey?: string) {

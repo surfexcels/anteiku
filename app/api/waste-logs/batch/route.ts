@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { getBusinessContext } from "@/src/lib/auth/get-business-context";
+import { verifyMutationRequest } from "@/src/lib/auth/verify-api-request";
 import { invalidateBusinessDashboardCache } from "@/src/lib/cache/invalidate-business-dashboard-cache";
 import { batchWasteLogSchema } from "@/src/modules/waste/application/waste-schemas";
 import { SupabaseWasteRepository } from "@/src/modules/waste/infrastructure/supabase-waste-repository";
 
 export async function POST(request: Request) {
+  const blocked = verifyMutationRequest(request);
+  if (blocked) return blocked;
+
   const context = await getBusinessContext();
   if ("error" in context) return context.error;
 
