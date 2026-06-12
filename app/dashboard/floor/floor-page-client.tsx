@@ -234,26 +234,18 @@ export function FloorPageClient({
           </div>
         </div>
 
-        <div className="floor-purpose">
-          <strong>On-shift waste logging</strong>
-          <p>
-            Built for baristas during service — tap a product when something
-            gets thrown away. One tap logs 1 unit. Install this page to your
-            home screen for the fastest access.
-          </p>
-        </div>
-
-        {data.locations.length > 1 ? (
-          <WorkspaceLocationSwitcher
-            activeLocationId={data.location.id}
-            locations={data.locations}
-            onChanged={async () => {
-              await refresh();
-              router.refresh();
-            }}
-            variant="floor"
-          />
-        ) : null}
+        <WorkspaceLocationSwitcher
+          activeLocationId={data.location.id}
+          canManageLocations={
+            data.role === "owner" || data.role === "admin"
+          }
+          locations={data.locations}
+          onChanged={async () => {
+            await refresh();
+            router.refresh();
+          }}
+          variant="floor"
+        />
 
         <div className="floor-status-row">
           <div className={`floor-status-pill tone-${status.tone}`}>

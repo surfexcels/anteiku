@@ -69,6 +69,50 @@ function Icon({
 }
 
 const weeklyData = [44, 59, 51, 72, 63, 88, 54];
+const productFeatures = [
+  {
+    icon: "bolt" as const,
+    title: "Floor mode",
+    description:
+      "A phone-first shift screen for baristas — tap a product to log waste in one second, with undo and install-to-home-screen support.",
+    tag: "Mobile PWA",
+  },
+  {
+    icon: "grid" as const,
+    title: "Multi-location workspaces",
+    description:
+      "Run several sites from one business. Switch the active location from the dashboard, floor mode, or mobile menu — stock and waste stay site-specific.",
+    tag: "1–10 locations",
+  },
+  {
+    icon: "bag" as const,
+    title: "Daily stock reconciliation",
+    description:
+      "Opening and closing counts tied to your menu, with usage, variance, and waste rolled into one daily rhythm managers can trust.",
+    tag: "Daily operations",
+  },
+  {
+    icon: "report" as const,
+    title: "Reports & spreadsheet exports",
+    description:
+      "Generate waste summaries and export clean CSV files for accountants — properly quoted values that open correctly in Excel and Sheets.",
+    tag: "Export ready",
+  },
+  {
+    icon: "spark" as const,
+    title: "Insights & recommendations",
+    description:
+      "See which products drive the most loss and get weekly savings opportunities based on your real waste patterns.",
+    tag: "Margin intelligence",
+  },
+  {
+    icon: "coffee" as const,
+    title: "Team & workspace settings",
+    description:
+      "Invite staff by email, assign roles, add locations, and keep each site’s data separated without spinning up a new account.",
+    tag: "Owner tools",
+  },
+];
 const products = [
   { name: "Croissants", units: 18, cost: 32.4, color: "#f0a550" },
   { name: "Oat milk", units: 6, cost: 19.2, color: "#6f8f72" },
@@ -100,7 +144,8 @@ function DashboardPreview() {
         <Logo />
         <nav>
           <a className="nav-item active" href="#dashboard"><Icon name="grid" />Overview</a>
-          <a className="nav-item" href="#waste"><Icon name="bag" />Inventory</a>
+          <a className="nav-item" href="#features"><Icon name="bolt" />Floor mode</a>
+          <a className="nav-item" href="#waste"><Icon name="bag" />Daily stock</a>
           <a className="nav-item" href="#waste"><Icon name="bag" />Waste log</a>
           <a className="nav-item" href="#insights"><Icon name="spark" />Insights<span className="new-pill">3</span></a>
           <a className="nav-item" href="#reports"><Icon name="report" />Reports</a>
@@ -269,9 +314,9 @@ export default function Home() {
         <section className="hero">
           <div className="hero-noise" />
           <div className="hero-copy">
-            <div className="announcement"><span>New</span> Built for independent cafés <Icon name="arrow" size={15} /></div>
-            <h1>Run your café with <em>clearer profit.</em></h1>
-            <p>Daily inventory, waste tracking, supplier imports, and smart insights — built for independent cafés who want margin clarity without enterprise software.</p>
+            <div className="announcement"><span>New</span> Floor mode, multi-site workspaces &amp; team invites <Icon name="arrow" size={15} /></div>
+            <h1>Run every café site with <em>clearer profit.</em></h1>
+            <p>Daily stock, one-tap floor waste logging, multi-location switching, team access, supplier imports, and margin insights — built for independent operators who outgrew spreadsheets but do not need enterprise software.</p>
             <div className="hero-actions">
               <a className="button primary large" href="#calculator">See my margin leaks <Icon name="arrow" size={19} /></a>
               <a className="button ghost large" href="#product"><span className="play">▶</span>See how it works</a>
@@ -292,34 +337,51 @@ export default function Home() {
             <div className="phone">
               <div className="phone-top"><span>9:41</span><i /><span>● ◒</span></div>
               <div className="phone-content">
-                <div className="phone-greeting"><span>Good morning, Elise</span><b>Today</b></div>
-                <div className="phone-loss">
-                  <span>WASTE COST · THIS WEEK</span>
-                  <strong>€83.85</strong>
-                  <small>↓ 12.4% from last week</small>
-                  <div className="phone-bars">{[35, 55, 42, 68, 49, 81, 30].map((height, index) => <i key={index} style={{ height: `${height}%` }} />)}</div>
+                <div className="phone-greeting"><span>Floor mode</span><b>City centre</b></div>
+                <div className="phone-floor-location">
+                  <span>ACTIVE LOCATION</span>
+                  <strong>City centre ▾</strong>
                 </div>
-                <div className="phone-action"><span className="float-icon dark"><Icon name="plus" /></span><div><b>Log today’s waste</b><small>Takes less than 30 seconds</small></div><Icon name="chevron" /></div>
-                <span className="phone-section-title">TOP WASTE ITEMS</span>
+                <span className="phone-section-title">QUICK WASTE · TAP TO LOG</span>
                 {products.slice(0, 3).map((product) => (
-                  <div className="phone-product" key={product.name}>
-                    <span className="product-dot" style={{ background: product.color }} /><span><b>{product.name}</b><small>{product.units} items</small></span><strong>€{product.cost.toFixed(2)}</strong>
+                  <div className="phone-floor-product" key={product.name}>
+                    <span><b>{product.name}</b><small>Tap · 1 unit</small></span>
+                    <strong>{product.units} today</strong>
                   </div>
                 ))}
+                <div className="phone-action"><span className="float-icon dark"><Icon name="grid" /></span><div><b>Open full dashboard</b><small>Stock, reports &amp; insights</small></div><Icon name="chevron" /></div>
               </div>
             </div>
           </div>
         </section>
 
         <section className="trust-strip">
-          <span>Purpose-built for</span><b><Icon name="coffee" />Cafés</b><b><Icon name="bag" />Bakeries</b><b><Icon name="bolt" />Coffee shops</b><b><Icon name="grid" />1–10 locations</b>
+          <span>Purpose-built for</span><b><Icon name="coffee" />Cafés</b><b><Icon name="bag" />Bakeries</b><b><Icon name="bolt" />Coffee shops</b><b><Icon name="grid" />Multi-site teams</b>
+        </section>
+
+        <section className="section features-section" id="features">
+          <div className="section-label">WHAT YOU GET</div>
+          <div className="section-intro centered">
+            <h2>Everything your team needs on the floor and in the back office.</h2>
+            <p>Anteiku is one workspace for daily operations, owner oversight, and accountant-ready exports — with a mobile flow your baristas will actually use.</p>
+          </div>
+          <div className="features-grid">
+            {productFeatures.map((feature) => (
+              <article className="feature-card" key={feature.title}>
+                <span className="feature-card-icon"><Icon name={feature.icon} size={22} /></span>
+                <h3>{feature.title}</h3>
+                <p>{feature.description}</p>
+                <span className="feature-card-tag">{feature.tag}</span>
+              </article>
+            ))}
+          </div>
         </section>
 
         <section className="section problem-section" id="product">
           <div className="section-label">THE REAL PROBLEM</div>
           <div className="section-intro split">
-            <h2>Margin leaks hide in stock, waste, and prices.</h2>
-            <p>Most cafés track sales but not what leaves the shelf — through waste, miscounts, or rising supplier costs. Anteiku connects the dots in euros.</p>
+            <h2>Margin leaks hide across sites, shifts, and supplier prices.</h2>
+            <p>Most cafés track tills but not what leaves the shelf — through waste, miscounts, or rising costs. Anteiku ties every site and shift together in euros.</p>
           </div>
           <div className="problem-grid">
             <article><span className="number">01</span><Icon name="clock" size={28} /><h3>No daily stock rhythm</h3><p>Opening and closing counts stay in heads or notebooks. Anteiku ties them to your menu in minutes.</p></article>
@@ -331,8 +393,8 @@ export default function Home() {
         <section className="dashboard-section">
           <div className="section-label light">YOUR PROFIT, MADE VISIBLE</div>
           <div className="section-intro centered light-copy">
-            <h2>Inventory, waste, imports, and insights — one calm workspace.</h2>
-            <p>Daily operations and margin intelligence without the weight of a full ERP.</p>
+            <h2>Floor logging, stock counts, imports, and insights — one calm workspace.</h2>
+            <p>Owners get margin intelligence. Staff get a fast mobile flow. Accountants get clean exports.</p>
           </div>
           <DashboardPreview />
         </section>
@@ -341,9 +403,10 @@ export default function Home() {
           <div className="section-label">HOW IT WORKS</div>
           <div className="section-intro centered"><h2>From menu setup to daily close.</h2><p>Most cafés are live within one shift.</p></div>
           <div className="steps">
-            <article><span>1</span><div className="step-icon"><Icon name="plus" size={30} /></div><h3>Set up your menu</h3><p>Add products and unit costs from our café catalog or your own list.</p></article>
-            <article><span>2</span><div className="step-icon"><Icon name="chart" size={30} /></div><h3>Count stock daily</h3><p>Opening and closing quantities reconciled with waste and implied sales.</p></article>
-            <article><span>3</span><div className="step-icon"><Icon name="spark" size={30} /></div><h3>Act on insights</h3><p>Weekly recommendations, reports, and supplier invoice matching.</p></article>
+            <article><span>1</span><div className="step-icon"><Icon name="plus" size={30} /></div><h3>Set up your workspace</h3><p>Add your menu, unit costs, locations, and invite the team from Settings.</p></article>
+            <article><span>2</span><div className="step-icon"><Icon name="bolt" size={30} /></div><h3>Run shifts in floor mode</h3><p>Baristas log waste with one tap on their phone while managers count daily stock.</p></article>
+            <article><span>3</span><div className="step-icon"><Icon name="chart" size={30} /></div><h3>Close the day with clarity</h3><p>Reconcile opening, closing, and waste per location — then export CSVs for finance.</p></article>
+            <article><span>4</span><div className="step-icon"><Icon name="spark" size={30} /></div><h3>Act on insights</h3><p>Weekly recommendations, carbon tracking, and supplier invoice matching in one place.</p></article>
           </div>
         </section>
 
@@ -353,10 +416,11 @@ export default function Home() {
             <h2>Less than the cost of one miscounted day.</h2>
             <p>Daily inventory, waste, imports, carbon tracking, and insights for independent cafés. No setup fee.</p>
             <ul>
+              <li><Icon name="check" />Floor mode PWA for on-shift waste logging</li>
+              <li><Icon name="check" />Multi-location switching &amp; team invites</li>
               <li><Icon name="check" />Daily opening &amp; closing stock</li>
-              <li><Icon name="check" />Waste log &amp; reconciliation</li>
-              <li><Icon name="check" />Supplier invoice import</li>
-              <li><Icon name="check" />Insights, reports &amp; EU carbon tools</li>
+              <li><Icon name="check" />CSV exports for waste, stock &amp; reports</li>
+              <li><Icon name="check" />Supplier invoice import &amp; EU carbon tools</li>
             </ul>
           </div>
           <article className="price-card">
@@ -375,7 +439,9 @@ export default function Home() {
             {[
               ["Do I need a full inventory system?", "No. Anteiku focuses on daily opening/closing counts on your menu items — accountant-style, not warehouse-scale stock control."],
               ["How long does it take to get started?", "Add your core products and costs in a few minutes. You can record your first waste log the same day."],
-              ["Can my team log waste too?", "Yes. The starter plan includes three team members, each with a simple, mobile-friendly logging flow."],
+              ["Can my team log waste too?", "Yes. Invite staff by email in Settings. They can use Floor mode on their phone for one-tap logging, while managers keep the full dashboard for stock and exports."],
+              ["Can I run more than one café?", "Yes. Add locations in Settings, then switch the active site from the workspace bar, mobile menu, or Floor mode. Waste and daily stock stay scoped to the selected location."],
+              ["What is Floor mode?", "A stripped-down mobile screen for on-shift staff. Install it to the home screen, pick your location, and tap products to log waste instantly — with undo for accidental taps."],
               [
                 "How do you calculate waste cost?",
                 "Each waste log multiplies the quantity you enter by the unit cost on your menu (ingredient or prep cost, not selling price). That cost is snapshotted when you save, so reports stay accurate even if you change prices later. Daily charts group logs by local calendar day.",

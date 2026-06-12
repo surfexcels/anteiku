@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { WorkspaceLocationSwitcher } from "./workspace-location-switcher";
 import { hydrateCachedData } from "@/src/lib/client/request-cache";
 import {
   bootstrapUrlForPath,
@@ -109,16 +110,26 @@ interface BusinessNavContext {
   };
 }
 
+interface DashboardNavWorkspace {
+  business: { name: string; role: string };
+  location: { id: string; name: string };
+  locations: Array<{ id: string; name: string }>;
+}
+
 export function DashboardNav({
   open,
   onOpenChange,
+  onLocationChanged,
   signOutAction,
   isPlatformAdmin = false,
+  workspace = null,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onLocationChanged?: () => Promise<void>;
   signOutAction: () => Promise<void>;
   isPlatformAdmin?: boolean;
+  workspace?: DashboardNavWorkspace | null;
 }) {
   const pathname = usePathname();
   const [canManageSettings, setCanManageSettings] = useState(
@@ -126,6 +137,18 @@ export function DashboardNav({
       hydrateCachedData<BusinessNavContext>(DASHBOARD_CACHE.business)?.permissions
         ?.canManageSettings ?? false,
   );
+
+  useEffect(() => {
+    if (open) {
+      document.body.classList.add("app-nav-locked");
+    } else {
+      document.body.classList.remove("app-nav-locked");
+    }
+
+    return () => {
+      document.body.classList.remove("app-nav-locked");
+    };
+  }, [open]);
 
   useEffect(() => {
     let cancelled = false;
@@ -173,7 +196,29 @@ export function DashboardNav({
         <span />
       </button>
 
-      <nav className={open ? "app-nav-open" : undefined}>
+      <nav
+        aria-hidden={!open}
+        className={open ? "app-nav-open" : undefined}
+      >
+        {workspace && workspace.locations.length > 0 ? (
+          <div className="app-nav-location">
+            <WorkspaceLocationSwitcher
+              activeLocationId={
+                workspace.location?.id ?? workspace.locations[0]?.id ?? ""
+              }
+              canManageLocations={
+                workspace.business.role === "owner" ||
+                workspace.business.role === "admin"
+              }
+              locations={workspace.locations}
+              onChanged={async () => {
+                await onLocationChanged?.();
+                closeMenu();
+              }}
+              variant="sidebar"
+            />
+          </div>
+        ) : null}
         <NavSection
           label="Daily operations"
           links={trackLinks}

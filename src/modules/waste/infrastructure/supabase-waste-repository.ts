@@ -54,10 +54,13 @@ interface WasteLogRow {
   note: string | null;
   business_products: WasteProductRelation | WasteProductRelation[] | null;
   waste_reasons: { label: string } | { label: string }[] | null;
+  locations?: { name: string } | { name: string }[] | null;
 }
 
 const WASTE_LOG_SELECT =
   "id, business_product_id, location_id, created_by, waste_reason_id, quantity, unit_cost_minor, total_cost_minor, unit_co2e_g, total_co2e_g, currency_code, occurred_at, note, business_products(name, sku, unit, unit_co2e_g, co2e_source, co2e_methodology), waste_reasons(label)";
+
+const WASTE_LOG_EXPORT_SELECT = `${WASTE_LOG_SELECT}, locations(name)`;
 
 const PRODUCT_SNAPSHOT_SELECT =
   "id, name, unit_cost_minor, currency_code, sku, unit, unit_co2e_g, co2e_source, co2e_methodology";
@@ -119,19 +122,32 @@ export class SupabaseWasteRepository implements WasteRepository {
     }));
   }
 
-  async listLogsForExport(businessId: string, days: number): Promise<WasteLog[]> {
+  async listLogsForExport(
+    businessId: string,
+    days: number,
+    locationId?: string,
+  ): Promise<Array<WasteLog & { locationName: string | null }>> {
     const since = new Date();
     since.setDate(since.getDate() - days);
 
-    const { data, error } = await this.client
+    let query = this.client
       .from("waste_logs")
-      .select(WASTE_LOG_SELECT)
+      .select(WASTE_LOG_EXPORT_SELECT)
       .eq("business_id", businessId)
       .gte("occurred_at", since.toISOString())
       .order("occurred_at", { ascending: false });
 
+    if (locationId) {
+      query = query.eq("location_id", locationId);
+    }
+
+    const { data, error } = await query;
+
     if (error) throw error;
-    return ((data ?? []) as unknown as WasteLogRow[]).map(mapWasteLog);
+    return ((data ?? []) as unknown as WasteLogRow[]).map((row) => ({
+      ...mapWasteLog(row),
+      locationName: relationName(row.locations),
+    }));
   }
 
   async listLogs(businessId: string, limit = 50): Promise<WasteLog[]> {

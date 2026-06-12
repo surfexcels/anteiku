@@ -139,15 +139,21 @@ export function DashboardShell({
         <AnteikuLogo href="/dashboard" size="sm" variant="sidebar" />
         <DashboardNav
           isPlatformAdmin={Boolean(workspace?.isPlatformAdmin)}
+          onLocationChanged={refreshWorkspaceAfterLocationChange}
           onOpenChange={setNavOpen}
           open={navOpen}
           signOutAction={signOutAction}
+          workspace={workspace}
         />
         <div className="app-sidebar-foot">
-          {workspace?.locations && workspace.locations.length > 1 ? (
+          {workspace?.locations && workspace.locations.length > 0 ? (
             <WorkspaceLocationSwitcher
               activeLocationId={
                 workspace.location?.id ?? workspace.locations[0]?.id ?? ""
+              }
+              canManageLocations={
+                workspace.business.role === "owner" ||
+                workspace.business.role === "admin"
               }
               locations={workspace.locations}
               onChanged={refreshWorkspaceAfterLocationChange}
@@ -215,35 +221,29 @@ function WorkspaceContextBand({
 }) {
   const activeLocationId =
     workspace?.location?.id ?? workspace?.locations[0]?.id ?? "";
-  const hasMultipleLocations = (workspace?.locations.length ?? 0) > 1;
 
   return (
     <section className="workspace-context-band" aria-label="Active workspace">
       <div className="workspace-context-copy">
         <span>Active workspace</span>
-        <strong>
-          {workspace
-            ? `${workspace.business.name} / ${workspace.location.name}`
-            : "Loading workspace"}
-        </strong>
+        <strong>{workspace?.business.name ?? "Loading workspace"}</strong>
         <p>
-          Stock, waste, reports, and floor mode use this location until you
-          switch it.
+          Daily stock, waste, reports, and floor mode follow the active location
+          below.
         </p>
       </div>
-      {workspace && hasMultipleLocations ? (
+      {workspace && workspace.locations.length > 0 ? (
         <WorkspaceLocationSwitcher
           activeLocationId={activeLocationId}
+          canManageLocations={
+            workspace.business.role === "owner" ||
+            workspace.business.role === "admin"
+          }
           locations={workspace.locations}
           onChanged={onLocationChanged}
           variant="bar"
         />
-      ) : (
-        <div className="workspace-context-single">
-          <span>Location</span>
-          <strong>{workspace?.location.name ?? "Loading"}</strong>
-        </div>
-      )}
+      ) : null}
     </section>
   );
 }

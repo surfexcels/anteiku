@@ -1,8 +1,10 @@
 import type {
+  BusinessInvitation,
   BusinessLocation,
   BusinessLocationDetail,
   BusinessMember,
   CurrentBusiness,
+  MembershipRole,
 } from "@/src/modules/business/domain/business";
 
 export interface MemberLocationPreference {
@@ -27,6 +29,29 @@ export interface BusinessRepository {
     isActive?: boolean;
   }): Promise<BusinessLocationDetail>;
   listMembers(businessId: string): Promise<BusinessMember[]>;
+  listPendingInvitations(businessId: string): Promise<BusinessInvitation[]>;
+  addMember(input: {
+    businessId: string;
+    userId: string;
+    role: MembershipRole;
+  }): Promise<BusinessMember>;
+  createInvitation(input: {
+    businessId: string;
+    invitedBy: string;
+    email: string;
+    role: MembershipRole;
+    fullName?: string;
+  }): Promise<BusinessInvitation>;
+  updateMember(input: {
+    businessId: string;
+    membershipId: string;
+    role?: MembershipRole;
+    isActive?: boolean;
+  }): Promise<BusinessMember>;
+  countActiveOwners(businessId: string): Promise<number>;
+  getMembershipForUser(
+    userId: string,
+  ): Promise<{ businessId: string; membershipId: string } | null>;
   updateBusinessName(businessId: string, name: string): Promise<void>;
   countActiveLocations(businessId: string): Promise<number>;
   getActiveLocationPreference(

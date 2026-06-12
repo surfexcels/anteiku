@@ -48,6 +48,8 @@ export function LoginForm() {
       return;
     }
 
+    await supabase.rpc("accept_pending_invitations");
+
     const next = new URLSearchParams(window.location.search).get("next");
     safeClientRedirect(next);
   }

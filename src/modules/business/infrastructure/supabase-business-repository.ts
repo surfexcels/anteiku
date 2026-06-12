@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { BusinessRepository } from "@/src/modules/business/application/business-repository";
 import type {
+  BusinessInvitation,
   BusinessLocation,
   BusinessLocationDetail,
   BusinessMember,
@@ -172,6 +173,155 @@ export class SupabaseBusinessRepository implements BusinessRepository {
 
     if (error) throw error;
     return count ?? 0;
+  }
+
+  async listPendingInvitations(businessId: string): Promise<BusinessInvitation[]> {
+    const { data, error } = await this.client
+      .from("business_invitations")
+      .select("id, email, role, full_name, created_at")
+      .eq("business_id", businessId)
+      .is("accepted_at", null)
+      .order("created_at", { ascending: true });
+
+    if (error) throw error;
+
+    return (data ?? []).map((row) => ({
+      id: row.id,
+      email: row.email,
+      role: row.role as MembershipRole,
+      fullName: row.full_name,
+      createdAt: row.created_at,
+    }));
+  }
+
+  async addMember(input: {
+    businessId: string;
+    userId: string;
+    role: MembershipRole;
+  }): Promise<BusinessMember> {
+    const { data, error } = await this.client
+      .from("business_memberships")
+      .insert({
+        business_id: input.businessId,
+        user_id: input.userId,
+        role: input.role,
+      })
+      .select("id, user_id, role, is_active, created_at")
+      .single();
+
+    if (error) throw error;
+
+    const { data: profile } = await this.client
+      .from("profiles")
+      .select("full_name")
+      .eq("id", input.userId)
+      .maybeSingle();
+
+    return {
+      id: data.id,
+      userId: data.user_id,
+      fullName: profile?.full_name ?? null,
+      role: data.role as MembershipRole,
+      isActive: data.is_active,
+      createdAt: data.created_at,
+    };
+  }
+
+  async createInvitation(input: {
+    businessId: string;
+    invitedBy: string;
+    email: string;
+    role: MembershipRole;
+    fullName?: string;
+  }): Promise<BusinessInvitation> {
+    const { data, error } = await this.client
+      .from("business_invitations")
+      .insert({
+        business_id: input.businessId,
+        email: input.email.toLowerCase(),
+        role: input.role,
+        full_name: input.fullName ?? null,
+        invited_by: input.invitedBy,
+      })
+      .select("id, email, role, full_name, created_at")
+      .single();
+
+    if (error) throw error;
+
+    return {
+      id: data.id,
+      email: data.email,
+      role: data.role as MembershipRole,
+      fullName: data.full_name,
+      createdAt: data.created_at,
+    };
+  }
+
+  async updateMember(input: {
+    businessId: string;
+    membershipId: string;
+    role?: MembershipRole;
+    isActive?: boolean;
+  }): Promise<BusinessMember> {
+    const patch: Record<string, MembershipRole | boolean> = {};
+    if (input.role !== undefined) patch.role = input.role;
+    if (input.isActive !== undefined) patch.is_active = input.isActive;
+
+    const { data, error } = await this.client
+      .from("business_memberships")
+      .update(patch)
+      .eq("business_id", input.businessId)
+      .eq("id", input.membershipId)
+      .select("id, user_id, role, is_active, created_at")
+      .single();
+
+    if (error) throw error;
+
+    const { data: profile } = await this.client
+      .from("profiles")
+      .select("full_name")
+      .eq("id", data.user_id)
+      .maybeSingle();
+
+    return {
+      id: data.id,
+      userId: data.user_id,
+      fullName: profile?.full_name ?? null,
+      role: data.role as MembershipRole,
+      isActive: data.is_active,
+      createdAt: data.created_at,
+    };
+  }
+
+  async countActiveOwners(businessId: string): Promise<number> {
+    const { count, error } = await this.client
+      .from("business_memberships")
+      .select("id", { count: "exact", head: true })
+      .eq("business_id", businessId)
+      .eq("role", "owner")
+      .eq("is_active", true);
+
+    if (error) throw error;
+    return count ?? 0;
+  }
+
+  async getMembershipForUser(
+    userId: string,
+  ): Promise<{ businessId: string; membershipId: string } | null> {
+    const { data, error } = await this.client
+      .from("business_memberships")
+      .select("id, business_id")
+      .eq("user_id", userId)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return null;
+
+    return {
+      businessId: data.business_id,
+      membershipId: data.id,
+    };
   }
 
   async listMembers(businessId: string): Promise<BusinessMember[]> {

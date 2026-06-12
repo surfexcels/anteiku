@@ -15,9 +15,12 @@ export async function GET() {
 
   try {
     const repository = new SupabaseBusinessRepository(context.supabase);
-    const [locations, members] = await Promise.all([
+    const [locations, members, invitations] = await Promise.all([
       repository.listLocationDetails(context.business.id),
       repository.listMembers(context.business.id),
+      canManageTeam(role)
+        ? repository.listPendingInvitations(context.business.id)
+        : Promise.resolve([]),
     ]);
 
     return NextResponse.json({
@@ -32,6 +35,7 @@ export async function GET() {
       activeLocationId: context.location.id,
       locations,
       members,
+      invitations,
       permissions: {
         canManageLocations: canManageLocations(role),
         canManageTeam: canManageTeam(role),

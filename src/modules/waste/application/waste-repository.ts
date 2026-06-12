@@ -52,7 +52,11 @@ export interface WasteRepository {
   ): Promise<WasteLog[]>;
   getLog(businessId: string, logId: string): Promise<WasteLogRecord | null>;
   deleteLog(businessId: string, logId: string): Promise<void>;
-  listLogsForExport(businessId: string, days: number): Promise<WasteLog[]>;
+  listLogsForExport(
+    businessId: string,
+    days: number,
+    locationId?: string,
+  ): Promise<Array<WasteLog & { locationName: string | null }>>;
   createLog(input: CreateWasteLogInput): Promise<WasteLog>;
   createLogsBatch(input: CreateBatchWasteLogsInput): Promise<WasteLog[]>;
   getSummary(businessId: string, days?: number): Promise<WasteSummary>;

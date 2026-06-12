@@ -11,6 +11,7 @@ export async function GET(request: Request) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      await supabase.rpc("accept_pending_invitations");
       const destination = resolveSafeRedirectUrl(next, url.origin);
       return NextResponse.redirect(destination);
     }

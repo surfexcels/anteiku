@@ -26,7 +26,16 @@ export interface BusinessMember {
   id: string;
   userId: string;
   fullName: string | null;
+  email?: string | null;
   role: MembershipRole;
   isActive: boolean;
+  createdAt: string;
+}
+
+export interface BusinessInvitation {
+  id: string;
+  email: string;
+  role: MembershipRole;
+  fullName: string | null;
   createdAt: string;
 }

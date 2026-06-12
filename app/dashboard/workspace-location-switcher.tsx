@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { invalidateWorkspaceCaches } from "@/src/lib/client/invalidate-dashboard-caches";
 
@@ -13,20 +15,30 @@ export function WorkspaceLocationSwitcher({
   locations,
   onChanged,
   variant = "sidebar",
+  canManageLocations = false,
 }: {
   activeLocationId: string;
   locations: WorkspaceLocation[];
-  onChanged?: () => void;
+  onChanged?: () => void | Promise<void>;
   variant?: "sidebar" | "floor" | "bar";
+  canManageLocations?: boolean;
 }) {
+  const router = useRouter();
   const [pending, setPending] = useState(false);
+  const [error, setError] = useState("");
 
-  if (locations.length <= 1) return null;
+  if (locations.length === 0) return null;
+
+  const hasMultiple = locations.length > 1;
+  const activeLocation =
+    locations.find((location) => location.id === activeLocationId) ?? locations[0];
 
   async function handleChange(nextLocationId: string) {
-    if (nextLocationId === activeLocationId || pending) return;
+    if (!hasMultiple || nextLocationId === activeLocationId || pending) return;
 
     setPending(true);
+    setError("");
+
     try {
       const response = await fetch("/api/business/workspace", {
         method: "PATCH",
@@ -35,20 +47,30 @@ export function WorkspaceLocationSwitcher({
       });
 
       if (!response.ok) {
-        throw new Error("Could not switch location");
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(
+          typeof payload.error === "string"
+            ? payload.error
+            : "Could not switch location",
+        );
       }
 
       invalidateWorkspaceCaches();
-      onChanged?.();
-    } catch {
-      // Keep current selection on failure.
+      await onChanged?.();
+      router.refresh();
+    } catch (switchError) {
+      setError(
+        switchError instanceof Error
+          ? switchError.message
+          : "Could not switch location",
+      );
     } finally {
       setPending(false);
     }
   }
 
   return (
-    <label
+    <div
       className={
         variant === "floor"
           ? "workspace-location-switcher floor"
@@ -57,18 +79,34 @@ export function WorkspaceLocationSwitcher({
             : "workspace-location-switcher"
       }
     >
-      <span>Location</span>
-      <select
-        disabled={pending}
-        onChange={(event) => handleChange(event.target.value)}
-        value={activeLocationId}
-      >
-        {locations.map((location) => (
-          <option key={location.id} value={location.id}>
-            {location.name}
-          </option>
-        ))}
-      </select>
-    </label>
+      <label>
+        <span>Active location</span>
+        {hasMultiple ? (
+          <select
+            aria-label="Switch location"
+            disabled={pending}
+            onChange={(event) => void handleChange(event.target.value)}
+            value={activeLocation.id}
+          >
+            {locations.map((location) => (
+              <option key={location.id} value={location.id}>
+                {location.name}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <div className="workspace-location-current">{activeLocation.name}</div>
+        )}
+      </label>
+      {pending ? <small className="workspace-location-status">Switching…</small> : null}
+      {error ? (
+        <small className="workspace-location-error">{error}</small>
+      ) : null}
+      {!hasMultiple && canManageLocations ? (
+        <Link className="workspace-location-manage" href="/dashboard/settings">
+          Add another site
+        </Link>
+      ) : null}
+    </div>
   );
 }

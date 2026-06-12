@@ -1,39 +1,57 @@
 import type { WasteLog } from "@/src/modules/waste/domain/waste";
+import {
+  buildCsvRow,
+  formatCsvMoney,
+  formatCsvNumber,
+  withCsvBom,
+} from "@/src/lib/csv/format-csv";
 
-function escapeCsv(value: string) {
-  if (/[",\n]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
+export interface WasteLogExportRow extends WasteLog {
+  locationName?: string | null;
 }
 
-export function exportWasteCsv(logs: WasteLog[], businessName: string) {
+export function exportWasteCsv(
+  logs: WasteLogExportRow[],
+  businessName: string,
+) {
   const lines = [
-    "Anteiku waste log export",
-    `Business,${escapeCsv(businessName)}`,
+    buildCsvRow(["Anteiku waste log export"]),
+    buildCsvRow(["Business", businessName]),
   ];
 
   if (logs.length > 0) {
-    lines.push(`Currency,${logs[0].currencyCode}`);
+    lines.push(buildCsvRow(["Currency", logs[0].currencyCode]));
   }
 
   lines.push(
     "",
-    "Date,Product,Quantity,Unit cost,Total cost,Unit CO2e (g),Total CO2e (g),Reason,Note",
+    buildCsvRow([
+      "Date",
+      "Location",
+      "Product",
+      "Quantity",
+      "Unit cost",
+      "Total cost",
+      "Unit CO2e (g)",
+      "Total CO2e (g)",
+      "Reason",
+      "Note",
+    ]),
     ...logs.map((log) =>
-      [
+      buildCsvRow([
         log.occurredAt.slice(0, 10),
-        escapeCsv(log.productName),
+        log.locationName ?? "",
+        log.productName,
         log.quantity,
-        (log.unitCostMinor / 100).toFixed(2),
-        (log.totalCostMinor / 100).toFixed(2),
-        log.unitCo2eG?.toFixed(3) ?? "",
-        log.totalCo2eG.toFixed(3),
-        escapeCsv(log.wasteReasonLabel ?? ""),
-        escapeCsv(log.note ?? ""),
-      ].join(","),
+        formatCsvMoney(log.unitCostMinor),
+        formatCsvMoney(log.totalCostMinor),
+        log.unitCo2eG === null ? "" : formatCsvNumber(log.unitCo2eG, 3),
+        formatCsvNumber(log.totalCo2eG, 3),
+        log.wasteReasonLabel ?? "",
+        log.note ?? "",
+      ]),
     ),
   );
 
-  return lines.join("\n");
+  return withCsvBom(lines.join("\n"));
 }

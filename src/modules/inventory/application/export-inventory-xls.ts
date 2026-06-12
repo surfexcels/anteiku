@@ -1,5 +1,5 @@
 import type { InventoryDayDetail } from "@/src/modules/inventory/domain/inventory";
-import { formatMoney } from "@/src/lib/format-money";
+import { formatCsvMoney } from "@/src/lib/csv/format-csv";
 
 function xmlEscape(value: string) {
   return value
@@ -61,25 +61,20 @@ export function exportInventoryXls(
         line.wasteQuantity,
         line.usageQuantity ?? "",
         line.varianceQuantity ?? "",
-        formatMoney(
-          Math.round(line.openingQuantity * line.unitCostMinor),
-          day.currencyCode,
-        ),
+        formatCsvMoney(Math.round(line.openingQuantity * line.unitCostMinor)),
         line.closingQuantity === null
           ? ""
-          : formatMoney(
+          : formatCsvMoney(
               Math.round(line.closingQuantity * line.unitCostMinor),
-              day.currencyCode,
             ),
-        formatMoney(line.wasteCostMinor, day.currencyCode),
+        formatCsvMoney(line.wasteCostMinor),
         line.usageCostMinor === null
           ? ""
-          : formatMoney(line.usageCostMinor, day.currencyCode),
+          : formatCsvMoney(line.usageCostMinor),
         line.varianceQuantity === null
           ? ""
-          : formatMoney(
+          : formatCsvMoney(
               Math.round(line.varianceQuantity * line.unitCostMinor),
-              day.currencyCode,
             ),
         line.note ?? "",
       ],
@@ -109,11 +104,11 @@ export function exportInventoryXls(
     "",
     "",
     "",
-    formatMoney(day.totals.openingCostMinor, day.currencyCode),
-    formatMoney(day.totals.closingCostMinor, day.currencyCode),
-    formatMoney(day.totals.wasteCostMinor, day.currencyCode),
-    formatMoney(day.totals.usageCostMinor, day.currencyCode),
-    formatMoney(day.totals.varianceCostMinor, day.currencyCode),
+    formatCsvMoney(day.totals.openingCostMinor),
+    formatCsvMoney(day.totals.closingCostMinor),
+    formatCsvMoney(day.totals.wasteCostMinor),
+    formatCsvMoney(day.totals.usageCostMinor),
+    formatCsvMoney(day.totals.varianceCostMinor),
     "",
   ]);
 

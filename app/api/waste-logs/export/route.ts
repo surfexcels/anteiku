@@ -12,7 +12,12 @@ export async function GET(request: Request) {
 
   try {
     const repository = new SupabaseWasteRepository(context.supabase);
-    const logs = await repository.listLogsForExport(context.business.id, days);
+    const locationId = searchParams.get("locationId") ?? context.location.id;
+    const logs = await repository.listLogsForExport(
+      context.business.id,
+      days,
+      locationId,
+    );
     const csv = exportWasteCsv(logs, context.business.name);
     const filename = `anteiku-waste-log-${days}d.csv`;
 

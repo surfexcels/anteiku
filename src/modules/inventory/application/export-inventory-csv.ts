@@ -1,60 +1,64 @@
 import type { InventoryDayDetail } from "@/src/modules/inventory/domain/inventory";
-import { formatMoney } from "@/src/lib/format-money";
-
-function escapeCsv(value: string) {
-  if (/[",\n]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
-}
+import {
+  buildCsvRow,
+  formatCsvMoney,
+  withCsvBom,
+} from "@/src/lib/csv/format-csv";
 
 export function exportInventoryCsv(
   day: InventoryDayDetail,
   businessName: string,
 ) {
   const lines = [
-    "Anteiku daily inventory export",
-    `Business,${escapeCsv(businessName)}`,
-    `Date,${day.stockDate}`,
-    `Status,${day.status}`,
-    `Currency,${day.currencyCode}`,
+    buildCsvRow(["Anteiku daily inventory export"]),
+    buildCsvRow(["Business", businessName]),
+    buildCsvRow(["Date", day.stockDate]),
+    buildCsvRow(["Status", day.status]),
+    buildCsvRow(["Currency", day.currencyCode]),
     "",
-    "Product,Unit,Opening,Closing,Waste,Usage (sold/consumed),Variance,Opening value,Closing value,Waste value,Usage value,Variance value,Note",
+    buildCsvRow([
+      "Product",
+      "Unit",
+      "Opening",
+      "Closing",
+      "Waste",
+      "Usage (sold/consumed)",
+      "Variance",
+      "Opening value",
+      "Closing value",
+      "Waste value",
+      "Usage value",
+      "Variance value",
+      "Note",
+    ]),
     ...day.lines.map((line) =>
-      [
-        escapeCsv(line.productName),
+      buildCsvRow([
+        line.productName,
         line.unit,
         line.openingQuantity,
         line.closingQuantity ?? "",
         line.wasteQuantity,
         line.usageQuantity ?? "",
         line.varianceQuantity ?? "",
-        formatMoney(
-          Math.round(line.openingQuantity * line.unitCostMinor),
-          day.currencyCode,
-        ),
+        formatCsvMoney(Math.round(line.openingQuantity * line.unitCostMinor)),
         line.closingQuantity === null
           ? ""
-          : formatMoney(
+          : formatCsvMoney(
               Math.round(line.closingQuantity * line.unitCostMinor),
-              day.currencyCode,
             ),
-        formatMoney(line.wasteCostMinor, day.currencyCode),
-        line.usageCostMinor === null
-          ? ""
-          : formatMoney(line.usageCostMinor, day.currencyCode),
+        formatCsvMoney(line.wasteCostMinor),
+        line.usageCostMinor === null ? "" : formatCsvMoney(line.usageCostMinor),
         line.varianceQuantity === null
           ? ""
-          : formatMoney(
+          : formatCsvMoney(
               Math.round(line.varianceQuantity * line.unitCostMinor),
-              day.currencyCode,
             ),
-        escapeCsv(line.note ?? ""),
-      ].join(","),
+        line.note ?? "",
+      ]),
     ),
     "",
-    "Totals,,,,,,,",
-    [
+    buildCsvRow(["Totals", "", "", "", "", "", "", "", "", "", "", "", ""]),
+    buildCsvRow([
       "",
       "",
       "",
@@ -62,16 +66,16 @@ export function exportInventoryCsv(
       "",
       "",
       "",
-      formatMoney(day.totals.openingCostMinor, day.currencyCode),
-      formatMoney(day.totals.closingCostMinor, day.currencyCode),
-      formatMoney(day.totals.wasteCostMinor, day.currencyCode),
-      formatMoney(day.totals.usageCostMinor, day.currencyCode),
-      formatMoney(day.totals.varianceCostMinor, day.currencyCode),
+      formatCsvMoney(day.totals.openingCostMinor),
+      formatCsvMoney(day.totals.closingCostMinor),
+      formatCsvMoney(day.totals.wasteCostMinor),
+      formatCsvMoney(day.totals.usageCostMinor),
+      formatCsvMoney(day.totals.varianceCostMinor),
       "",
-    ].join(","),
+    ]),
     "",
     "Formula: Usage = Opening - Closing - Waste. Variance flags when waste + closing exceeds opening.",
   ];
 
-  return `\uFEFF${lines.join("\n")}`;
+  return withCsvBom(lines.join("\n"));
 }
